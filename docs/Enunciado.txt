@@ -1,0 +1,3 @@
+En este proyecto, el objetivo es desplegar una plataforma para atención móvil comunitaria (mismo proyecto de Plataformas), pero enfocados en la infraestructura necesaria para la operación de dicha plataforma. El portal cautivo, debe permitir el acceso a los diferentes grupos de interés como si fuera una red independiente y con acceso a Internet. Para esto, deben tener algún tipo de proxy local con un servidor basado en Mini PC o Raspberry PI.
+
+Se incluye como anexo la rubrica para cada entrega (Un excel, tres pestañas).
