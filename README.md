@@ -116,7 +116,7 @@ ProyectoRedesRurales/
 │   ├── README.md
 │   └── Fase2.1_Implementacion_Fisica_RPi5.pdf
 ├── fase3-operacion/README.md              # Fase 3 — Alcance pendiente
-├── configs/
+├── configs/                               # Configuraciones de equipos (ver configs/README.md)
 │   ├── mikrotik/hub-base.rsc              # RouterOS 7 base
 │   └── servidor/01-hub.yaml               # Netplan del hub RPi5
 ├── skills/skills.md                       # Catálogo de competencias del proyecto
