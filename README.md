@@ -1,200 +1,153 @@
-
 # Proyecto Redes Rurales — Infraestructura de Redes 2
 
-> **Diseño e Implementación de Infraestructura de Red Local Autónoma para Atención Móvil Comunitaria en Entornos Rurales**
+> **Diseño e implementación de la infraestructura de red local autónoma para una plataforma de atención móvil comunitaria en entornos rurales**
 > **Universidad Icesi** — Departamento de Tecnologías de Información y Comunicaciones
-> **Materia:** Infraestructura de Redes 2
-> **Estudiante:** José David Rodríguez Pinilla (Código: `A00407151` — `jdrpjd@gmail.com`)
-> **Profesor:** Andrés Navarro Cadavid, Ph.D.
+> **Materia:** Infraestructura de Redes 2 — **Profesor:** Andrés Navarro Cadavid, Ph.D.
+> **Equipo:**
+> - José David Rodríguez Pinilla — `A00407151`
+> - Carol Andrea Mosquera — `A00403934`
 
 ---
 
-## 1. Contexto y Descripción del Proyecto
+## 1. Contexto
 
-El objetivo de este proyecto es diseñar y desplegar la infraestructura de red local para una **unidad móvil de atención comunitaria** que opera en áreas rurales de difícil acceso. Estas zonas enfrentan problemas críticos como:
+El proyecto despliega la infraestructura para una **unidad de atención comunitaria** que opera en zonas rurales. Allí la conexión a Internet es escasa o costosa y la energía es inestable. El enunciado ([`docs/Enunciado.txt`](docs/Enunciado.txt)) pide:
 
-- **Ausencia o intermitencia severa de conectividad a Internet** (cobertura móvil limitada, alto costo de enlaces satelitales).
-- **Inestabilidad del fluido eléctrico** (alimentación dependiente de la batería del vehículo y sistemas auxiliares).
-- **Necesidad de atender grupos heterogéneos:** Comunidad general (navegación educativa/salud), Educadores (material pedagógico) y Personal de Salud (historias clínicas confidenciales).
+- Un portal cautivo que dé acceso a cada grupo de interés como si fuera una red independiente con Internet.
+- Un proxy/caché local sobre una Mini PC o una Raspberry Pi.
 
-La red opera como un sistema autónomo basado en la filosofía ***offline-first***: funciona al 100% en aislamiento total gracias a un almacenamiento masivo local de 2–4 TB y conmuta inteligentemente a modo *online* cuando detecta enlace LTE/satelital para realizar sincronizaciones incrementales diferidas.
+La red sigue la filosofía **offline-first**: los servicios locales funcionan sin Internet. El enlace satelital se usa para navegar y para sincronizar cuando está disponible.
 
----
-
-## 2. Requisitos y Decisiones de Diseño
-
-| ID            | Requisito                                       | Decisión Técnica de Ingeniería                                                                                                            |
-| ------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **RQ1** | Red autónoma con acceso a Internet oportunista | Raspberry Pi 5 como gateway con NAT/firewall (`nftables`); WAN mediante adaptador USB 3 a Gigabit Ethernet.                                |
-| **RQ2** | Acceso diferenciado por grupo de interés       | Portal cautivo único (`openNDS`) con perfiles dinámicos en L3 + SSID cifrado WPA3 para salud.                                            |
-| **RQ3** | Proxy/Caché local de alto rendimiento          | Squid Proxy en el host con jerarquía en RAM, NVMe (`rock`) y SSD (`aufs`), y modo híbrido HTTPS (*peek and splice*).                 |
-| **RQ4** | Almacenamiento masivo (2–4 TB)                 | SSD USB 3 portátil de 2 TB (antivibración/bajo consumo, ampliable a 4 TB con un 2.º SSD) + NVMe para SO y BD.                             |
-| **RQ5** | Operación offline integral                     | Conmutación automática (*heartbeat* cada 30s con histéresis) que activa `offline_mode on` en Squid y DNS local.                       |
-| **RQ6** | Tolerancia a cortes eléctricos                 | Batería auxiliar LiFePO₄ 12V/20Ah con cargador DC-DC, monitor de voltaje para apagado ordenado y `ext4` con `data=ordered`.            |
-| **RQ7** | Protección de datos clínicos                  | Aislamiento L2/L3: SSID 2 (`Salud-Segura`) con WPA3-SAE, VLAN 10 dedicada, TLS interno y base de datos cifrada.                            |
-| **RQ8** | Plataforma de atención comunitaria             | Aplicación Spring Boot 3.x (Java 21) en contenedor Docker multi-arch (`linux/arm64`), PostgreSQL en NVMe y cola *outbox* sincronizable. |
+La evaluación usa la rúbrica de 3 fases ([`docs/Rúbrica Proyecto Redes Rurales.xlsx`](docs/Rúbrica%20Proyecto%20Redes%20Rurales.xlsx)): plan, prototipo y sistema operacional.
 
 ---
 
-## 3. Arquitectura del Sistema
+## 2. Historia del diseño
 
-### 3.1 Topología Física y Lógica
+Al cerrar la Fase 1 cada integrante tenía su propia versión del plan. Las dos se unificaron en un **diseño consolidado**, que se montó y validó en GNS3 antes de comprar hardware. El detalle y la comparación están en [`fase1-plan/README.md`](fase1-plan/README.md).
+
+| Versión | Ubicación | Estado |
+|---|---|---|
+| José (`10.10.0.0/16`, RPi5 como router, LTE, openNDS) | `fase1-plan/version-jose/` | Histórico (se reutilizan caché, almacenamiento, riesgos y cronograma) |
+| Carol (`10.20.0.0/22`, Mini PC, 4G, WireGuard) | `fase1-plan/version-carol/` | Histórico (se reutilizan VLSM, sumarización y matriz de tráfico) |
+| **Consolidado** (`10.20.0.0/24`, MikroTik + RPi5 + Starlink + UniFi) | `fase1-plan/laboratorio-gns3/`, `fase2-prototipo/` | **Vigente** |
+
+---
+
+## 3. Arquitectura vigente
+
+### 3.1 Equipos
+
+| Equipo | Rol |
+|---|---|
+| **Starlink Mini** (modo bypass) | Salida a Internet. Entrega la IP de `ether1` por DHCP y aplica CGNAT. |
+| **MikroTik** (RouterOS 7) | Router L3 de todas las VLAN (router-on-a-stick, bridge con `vlan-filtering`), NAT. En Fase 2: firewall entre VLAN, Hotspot (portal cautivo), colas y relay DHCP. |
+| **UniFi UAP-AC-M** (PoE) | Access point L2. Asocia cada SSID a una VLAN. Su gestión va sin etiqueta en la VLAN 10. |
+| **Raspberry Pi 5** — servidor `hub` | Ubuntu Server 24.04 ARM64 con IP fija en la VLAN 10. Servicios: DNS/DHCP (`dnsmasq`), NTP (`chrony`), Docker, Nginx, Squid, Mosquitto. Disco NVMe + 2–4 TB por USB 3. |
+| Portátil de administración | Conectado por cable a `ether4` (VLAN 10). |
+| Batería + medidor + convertidores DC | Alimentación autónoma con apagado ordenado al 15 %. |
+
+### 3.2 Topología
 
 ```
-                      [ Internet / ISP (LTE / Satélite) ]
-                                      |
-                           [ Módem / Router LTE ]
-                                      | (WAN: eth1 - USB3 GbE)
-        +-----------------------------v-----------------------------+
-        |                 Raspberry Pi 5 (8 GB RAM)                |
-        |  - Host: nftables (NAT/FW), dnsmasq (DNS/DHCP), openNDS    |
-        |          Squid (Proxy/Caché), Nginx (Reverse Proxy)       |
-        |  - Storage: M.2 NVMe (SO/BD/Rock) + SSD USB 3 (2-4 TB)   |
-        |  - Containers: Spring Boot, PostgreSQL, Jellyfin, Kiwix   |
-        +-----------------------------+-----------------------------+
-                                      | (Trunk 802.1Q: eth0)
-                           [ Switch Gestionable L2 ]
-                           /                       \
-        (Trunk VLAN 10,30,99)                     (Acceso VLAN 99)
-                 |                                        |
-       [ Access Point Wi-Fi 6 ]                   [ Laptop Admin SSH ]
-        /                    \
-  (SSID 1: Abierto)     (SSID 2: WPA3-SAE)
-   VLAN 30 (Portal)      VLAN 10 (Salud Segura)
-         |                        |
-  [ Celulares / Tablets ]  [ Tablets Clínicas ]
-   - Comunidad (2h / 2Mbps)  - Personal de Salud
-   - Educadores (12h / 5Mbps)  (Acceso directo a
-   - Salud por portal           plataforma interna)
+        [ Internet ] ── Starlink Mini (bypass, CGNAT)
+                              │ ether1 (WAN, DHCP)
+                    ┌─────────┴─────────┐
+                    │  MikroTik  br-lan │  vlan10-admin  10.20.0.161/28
+                    │  RouterOS 7       │  vlan20-salud  10.20.0.129/27
+                    │                   │  vlan30-publica 10.20.0.1/25
+                    └──┬───────┬─────┬──┘
+              ether2   │ ether3│     │ ether4        (ether5 deshabilitado)
+          (acceso V10) │(troncal)    │(acceso V10)
+                       │       │     │
+     Raspberry Pi 5 "hub"      │   Portátil admin
+       10.20.0.162/28          │
+                     UniFi UAP-AC-M  (V10 sin etiqueta + V20/V30 etiquetadas)
+                      /                 \
+            SSID Hub-Salud (V20)   SSID Hub-Publica (V30)
+             teléfonos de salud     teléfonos de la comunidad
 ```
 
-### 3.2 Segmentación de Red (L2 / L3)
+### 3.3 Direccionamiento (VLSM sobre `10.20.0.0/24`)
 
-La red utiliza el direccionamiento privado `10.10.0.0/16` con VLSM y sufijos `.internal` (RFC 6762 / IETF private TLD):
+| VLAN | Nombre | Subred | Gateway | Hosts útiles | Equipos con IP fija |
+|---|---|---|---|---|---|
+| 10 | Administración | `10.20.0.160/28` | `10.20.0.161` | 14 | hub `.162`, cliente-admin `.164` |
+| 20 | Salud | `10.20.0.128/27` | `10.20.0.129` | 30 | (lab) cliente-salud `.130` |
+| 30 | Pública / Comunidad | `10.20.0.0/25` | `10.20.0.1` | 126 | (lab) cliente-publica `.5` |
+| — | Libre para crecer | `10.20.0.176/28`, `10.20.0.192/26` | — | 14 + 62 | — |
+| WAN | `ether1` | DHCP de Starlink (en GNS3: `192.168.122.0/24`) | — | — | — |
 
-| Segmento / VLAN                   | Subred CIDR       | Gateway        | Rango DHCP (Capacidad)                                | Propósito y Control                                                      |
-| --------------------------------- | ----------------- | -------------- | ----------------------------------------------------- | ------------------------------------------------------------------------- |
-| **VLAN 10: Salud Segura**   | `10.10.10.0/24` | `10.10.10.1` | `.50` -- `.200` (151 leases, 12h)                 | Equipos clínicos, WPA3, sin portal cautivo, acceso a `salud.internal`. |
-| **VLAN 30: Portal Cautivo** | `10.10.30.0/23` | `10.10.30.1` | `10.10.30.50` -- `10.10.31.250` (~457 leases, 2h) | Comunidad y educadores, SSID abierto, interceptado por openNDS.           |
-| **VLAN 99: Gestión**       | `10.10.99.0/28` | `10.10.99.1` | `.5` -- `.14` (10 estáticas)                     | Administración cableada del AP, Switch y consola SSH del nodo.           |
-| **VLAN 20: Reserva**        | `10.10.20.0/24` | `10.10.20.1` | -                                                     | Reservada para crecimiento (segundo AP o aula móvil).                    |
-| **WAN (Uplink LTE)**        | DHCP ISP          | Dinámico      | 1 IP pública/CGNAT                                   | Interfaz `eth1` (USB 3 a GbE) con masquerade NAT en `nftables`.       |
+NAT: `srcnat 10.20.0.0/24 → ether1 masquerade`. Hay doble traducción (MikroTik + CGNAT de Starlink). Por eso desde Internet nadie puede iniciar conexiones hacia el sitio.
 
-### 3.3 Presupuesto de Memoria RAM (Raspberry Pi 5 - 8 GB)
+### 3.4 Configuraciones en el repositorio
 
-| Servicio                                                                       | Entorno           | RAM Asignada      |
-| ------------------------------------------------------------------------------ | ----------------- | ----------------- |
-| Sistema Operativo (Debian) + Docker Engine                                     | Host nativo       | 0.80 GB           |
-| Squid Proxy (`cache_mem` 1 GB + índice en RAM y proceso)                    | Host nativo       | 1.50 GB           |
-| Servicios de red (`dnsmasq`, `openNDS`, `Nginx`)                         | Host nativo       | 0.30 GB           |
-| Plataforma de atención (Spring Boot 3.x JVM `-Xmx768m`)                     | Contenedor Docker | 1.00 GB           |
-| Base de datos PostgreSQL (con `shared_buffers` 256MB)                        | Contenedor Docker | 0.75 GB           |
-| Servidor multimedia Jellyfin (*direct play*, sin transcodificación en vivo) | Contenedor Docker | 0.80 GB           |
-| Servidor educativo Kolibri                                                     | Contenedor Docker | 0.70 GB           |
-| Servidor Kiwix-serve (Wikipedia/ZIM offline)                                   | Contenedor Docker | 0.30 GB           |
-| **Total Comprometido**                                                   |                   | **6.15 GB** |
-| **Memoria Libre para Caché de Páginas del Kernel (I/O)**               |                   | **1.85 GB** |
+- [`configs/mikrotik/hub-base.rsc`](configs/mikrotik/hub-base.rsc): configuración base del MikroTik (VLAN, gateways, DNS, NAT).
+- [`configs/servidor/01-hub.yaml`](configs/servidor/01-hub.yaml): netplan del hub (RPi5).
 
 ---
 
-## 4. Estrategia de Almacenamiento y Caché Masivo (2–4 TB)
+## 4. Estrategia de caché, almacenamiento y energía
 
-### 4.1 Jerarquía de Almacenamiento
+Estas ideas vienen de la versión de José ([`InformePFinal.tex`](fase1-plan/version-jose/InformePFinal.tex)). Hay que ajustarlas al direccionamiento vigente en la Fase 2.
 
-1. **Nivel 1 (RAM):** `cache_mem` de 1024 MB en Squid y tabla DNS en memoria.
-2. **Nivel 2 (NVMe M.2 - 256 a 512 GB):** SO, base de datos PostgreSQL, volúmenes Docker y directorio `rock` de Squid para objetos pequeños ($\le$256 KB).
-3. **Nivel 3 (SSD USB 3 - 2 TB a 4 TB):** Directorio `aufs` de Squid (200 GB para objetos grandes), repositorio Kiwix ZIM (100 GB), Kolibri (150 GB), videos educativos pre-transcodificados Jellyfin (1000 GB), manuales PDF (20 GB) y respaldos (100 GB).
-
-### 4.2 Políticas de Caché y Manejo de HTTPS
-
-- **HTTP (Puerto 80):** Intercepción transparente redirigida al puerto `3129` de Squid vía `nftables`.
-- **HTTPS (Puerto 443):** Modo **SslPeekAndSplice** en puerto `3130`. Squid inspecciona el SNI del *ClientHello* para aplicar listas de control de acceso y registrar dominios, dejando pasar el túnel TLS intacto para preservar la privacidad y evitar instalar certificados CA en dispositivos de la comunidad.
-- **Espejos Locales Curados:** Contenido masivo (Wikipedia, cursos, videos) servido directamente desde Nginx local en dominios `*.internal` sin requerir conexión a Internet.
-- **Políticas de Refresco (`refresh_pattern`):** Retención agresiva mínima de 7 días (10080 min) y máxima de 30 días para archivos estáticos (`pdf`, `epub`, `zim`, `mp4`, `webm`, `jpg`, `png`, `css`, `js`). Reemplazo mediante algoritmo `heap LFUDA` (Least Frequently Used with Dynamic Aging).
+- **Caché Squid jerárquica:** RAM (`cache_mem`), `rock` en NVMe para objetos pequeños y `aufs` en el disco de 2–4 TB para objetos grandes. Reemplazo `heap LFUDA`.
+- **HTTPS:** *peek and splice* por SNI, sin instalar una CA en los teléfonos. El contenido masivo se sirve desde espejos locales en Nginx.
+- **Refresco:** `refresh_pattern` agresivo para estáticos (`pdf`, `epub`, `zim`, `mp4`, `jpg`, `css`, `js`): mínimo 7 días, máximo 30.
+- **Contenido offline:** Kiwix (Wikipedia ZIM), Kolibri y videos pre-transcodificados para Jellyfin.
+- **Conmutación online/offline:** *heartbeat* con histéresis que activa `offline_mode` en Squid.
+- **Energía:** batería con medidor y apagado ordenado al 15 %. Además: `ext4` con `noatime` y particiones por servicio para evitar corrupción.
 
 ---
 
-## 5. Sistema de Energía y Resiliencia
-
-- **Consumo Total:** ~27 W típico / ~39 W pico (RPi5 + NVMe + SSD + AP Wi-Fi 6 + Switch + Router LTE).
-- **Alimentación:** Batería auxiliar LiFePO₄ de 12V/20Ah (~256 Wh, ~185 Wh útiles al 90% de eficiencia).
-- **Autonomía:** **~6.8 horas** en uso típico y **~4.7 horas** en el peor caso con el motor apagado. En marcha, se carga mediante convertidor DC-DC conectado al alternador.
-- **Protección del Almacenamiento:** Monitor de voltaje que activa un apagado ordenado del sistema (`shutdown -h now`) al caer por debajo del umbral de descarga crítica, evitando la corrupción del SSD.
-
----
-
-## 6. Plan de Trabajo, Cronograma y Fases (11 Semanas)
-
-Dado que el proyecto se ejecuta con un **único integrante**, la planificación aplica nivelación de recursos serializando la ruta crítica en 11 semanas, con compras y descargas en segundo plano:
-
-```
-Semana:    S1   S2   S3   S4   S5   S6   S7   S8   S9   S10   S11
-Fase 1:   [T1: Diseño/Plan]
-Fase 2:                   [T2:SO] [T3:Red] [T4:Squid] [T5:Portal]
-Fase 3:                                       [T6:App] [T7:Media] [T8-T9] [T10:Test]
-Compras:       (Lote 1)---^   (Lote 2)---^             (Lote 3)---^
-```
-
-### 6.1 Actividades de la Ruta Crítica
-
-- **T1 (Sem. 1–3):** Diseño de arquitectura, informe IEEE Fase 1, topología, matriz de riesgos y plan de compras. *(Hito: Informe Fase 1)*.
-- **T2 (Sem. 4):** Instalación de Debian/Raspberry Pi OS, optimización de kernel, particionado y montaje de SSD 2 TB, Docker.
-- **T3 (Sem. 5):** Configuración de red base: VLANs 802.1Q, reglas `nftables`, `dnsmasq` (DHCP/DNS) y enlace AP.
-- **T4 (Sem. 6):** Despliegue de Squid (HTTP/HTTPS peek+splice), Nginx y caché de contenido estático (HITs verificados).
-- **T5 (Sem. 7):** Integración del portal cautivo `openNDS` con perfiles (Comunidad, Educador, Salud). *(Hito: Prototipo Fase 2)*.
-- **T6 (Sem. 8):** Despliegue de plataforma Spring Boot 3.x en contenedor Docker y base de datos PostgreSQL.
-- **T7 (Sem. 9):** Integración de servicios de contenido: Kiwix, Kolibri, servidor Jellyfin y pre-transcodificación de video.
-- **T8–T9 (Sem. 10):** Dashboard de usuario con búsqueda local y servicio de conmutación automática online/offline.
-- **T10 (Sem. 11):** Pruebas de carga, autonomía de batería, endurecimiento de seguridad y entrega final. *(Hito: Sistema Plenamente Operativo Fase 3)*.
-
-### 6.2 Plan de Compras Escalonado (BOM)
-
-- **Lote 1 (Sem. 2 - USD $380):** RPi5 8GB, Active Cooler, fuente 27W, M.2 HAT+ con NVMe 256-512GB, SSD USB 3 de 2TB, adaptador USB 3 a GbE.
-- **Lote 2 (Sem. 3 - USD $110):** Access Point Wi-Fi 6 con VLAN y multi-SSID, Switch gestionable de 5 puertos.
-- **Lote 3 (Sem. 7 - USD $200):** Router LTE con antenas externas, batería LiFePO₄ 12V/20Ah, convertidor DC-DC 12V a 5V/5A.
-- **Total Inversión Base:** USD $690 (+ 15% contingencia = **USD $794**).
-
----
-
-## 7. Matriz de Gestión de Riesgos Principales
-
-| Riesgo                                                   | Prob. | Imp. |    Nivel    | Mitigación Técnica                                                                                                                      |
-| -------------------------------------------------------- | :---: | :--: | :----------: | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Corte eléctrico repentino en la unidad móvil** |   4   |  5  | **20** | Batería LiFePO₄ + cargador DC-DC, script de apagado ordenado por umbral de voltaje y sistema `ext4` con `data=ordered`.             |
-| **Falta total de enlace satelital o LTE**          |   5   |  4  | **20** | Modo `offline_mode on` automático en Squid, DNS split-horizon interno y precarga inicial de 1.3 TB de contenido curado.                |
-| **Sobrecarga de trabajo (único integrante)**      |   4   |  4  | **16** | Nivelación secuencial de recursos, desarrollo previo en laptop con Docker Buildx y alcance modular (Esencial / Deseable / Opcional).     |
-| **Falla del SSD o corrupción del sistema**        |   3   |  5  | **15** | Uso de SSD (resistente a vibraciones mecánicas del vehículo), particiones separadas por servicio y respaldos automatizados.             |
-| **Saturación del disco de 2 TB**                  |   3   |  4  | **12** | Cuotas estrictas por partición, purga LFUDA automática en Squid y scripts `systemd timer` para eliminar temporales al superar el 85%. |
-| **Exposición de datos clínicos de salud**        |   2   |  5  | **10** | SSID 2 exclusivo con cifrado WPA3-SAE, VLAN 10 aislada por firewall `nftables` y HTTPS interno sin acceso desde la red comunitaria.     |
-
----
-
-## 8. Estructura del Repositorio
+## 5. Estructura del repositorio
 
 ```
 ProyectoRedesRurales/
-├── docs/                             # Documentación y rúbrica oficial
-│   ├── Enunciado.txt                 # Enunciado oficial del proyecto
-│   ├── Rúbrica Proyecto...xlsx       # Criterios de evaluación en 3 fases
-│   └── InformePFinal.tex             # Documento maestro IEEE con diseño exhaustivo
-├── fase1-plan/                       # Entregables de la Fase 1
-│   └── informe_fase1.tex             # Informe IEEE listo para compilar en Overleaf
-├── configs/                          # Plantillas de configuración (Squid, dnsmasq, nftables, Nginx)
-├── scripts/                          # Scripts de conmutación offline/online y purga de almacenamiento
-├── GEMINI.md                         # Reglas operativas del asistente IA (Siempre en Español)
-├── skills.md                         # Catálogo de habilidades y competencias técnicas del proyecto
-└── README.md                         # Contexto global y especificación técnica de la infraestructura
+├── docs/                                  # Material oficial del curso
+│   ├── Enunciado.txt
+│   └── Rúbrica Proyecto Redes Rurales.xlsx
+├── fase1-plan/                            # Fase 1 — Plan de proyecto
+│   ├── README.md                          # Comparación de versiones y diseño consolidado
+│   ├── version-jose/InformePFinal.tex     # Informe IEEE (versión José)
+│   ├── version-carol/…Carol.pdf           # Topología, VLSM y enrutamiento (versión Carol)
+│   └── laboratorio-gns3/…GNS3_Hub.pdf     # Fase 1.2 — laboratorio virtual consolidado
+├── fase2-prototipo/                       # Fase 2 — Prototipo
+│   ├── README.md
+│   └── Fase2.1_Implementacion_Fisica_RPi5.pdf
+├── fase3-operacion/README.md              # Fase 3 — Alcance pendiente
+├── configs/
+│   ├── mikrotik/hub-base.rsc              # RouterOS 7 base
+│   └── servidor/01-hub.yaml               # Netplan del hub RPi5
+├── skills/skills.md                       # Catálogo de competencias del proyecto
+├── .claude/skills/ingeniero-redes-rurales/SKILL.md   # Skill de Claude Code (ingeniero de redes)
+├── GEMINI.md                              # Reglas del asistente (siempre en español)
+└── README.md
 ```
 
 ---
 
-## 9. Estado del Proyecto
+## 6. Estado del proyecto
 
-- [X] **Fase 1: Plan de Proyecto**
-  - [X] Arquitectura de Red L2/L3 optimizada para Raspberry Pi 5.
-  - [X] Estrategia de Caché jerárquica con Squid y almacenamiento 2–4 TB.
-  - [X] Cronograma de 11 semanas, ruta crítica y presupuesto de compras escalonado.
-  - [X] Matriz de gestión de riesgos (energía, enlace, disco y seguridad clínica).
-  - [X] Informe IEEE compilable en Overleaf ([`docs/InformePFinal.tex`](<file:///C:/Users/Fa1097la/OneDrive%20-%20Universidad%20Icesi/Sexto%20Semestre/Infraestructura2/ProyectoRedesRurales/docs/InformePFinal.tex>) / [`fase1-plan/informe_fase1.tex`](<file:///C:/Users/Fa1097la/OneDrive%20-%20Universidad%20Icesi/Sexto%20Semestre/Infraestructura2/ProyectoRedesRurales/fase1-plan/informe_fase1.tex>)).
-- [ ] **Fase 2: Prototipo Funcional** (SO base, almacenamiento 2 TB, VLANs, Squid estático y portal cautivo).
-- [ ] **Fase 3: Sistema Plenamente Operacional** (Plataforma Spring Boot, Jellyfin, Dashboard con búsqueda y conmutación automática).
+- [x] **Fase 1 — Plan de proyecto**
+  - [x] Versión José: informe IEEE con caché, almacenamiento, cronograma, BOM y riesgos.
+  - [x] Versión Carol: topología, VLSM, supernetting, tablas de rutas y matriz de tráfico.
+  - [x] Diseño consolidado (MikroTik + RPi5 + Starlink + UniFi, `10.20.0.0/24`).
+- [x] **Fase 1.2 — Laboratorio virtual GNS3** (27/10/2026)
+  - [x] MikroTik CHR 7.25 con VLAN 10/20/30, NAT y salida a Internet.
+  - [x] Servidor Ubuntu 24.04.5 en `10.20.0.162/28`, clientes por VLAN y tráfico 802.1Q verificado.
+  - [ ] Aislamiento entre VLAN (se hace en la Fase 2 con el firewall).
+- [ ] **Fase 2 — Prototipo funcional**
+  - [x] 2.1 Raspberry Pi 5 física (Ubuntu Server 24.04) integrada al laboratorio mediante un nodo Cloud.
+  - [ ] 2.2 MikroTik físico (`/import hub-base.rsc`).
+  - [ ] DHCP/DNS en el hub con relay, Squid, Nginx, Docker y Mosquitto.
+  - [ ] Firewall entre VLAN, Hotspot (portal cautivo) y colas.
+  - [ ] Disco de 2–4 TB montado y optimizado.
+- [ ] **Fase 3 — Sistema plenamente operacional** (Jellyfin, purga automática, dashboard con búsqueda, conmutación online/offline, energía).
+
+---
+
+## 7. Herramientas de IA
+
+- **Claude Code:** la skill [`ingeniero-redes-rurales`](.claude/skills/ingeniero-redes-rurales/SKILL.md) contiene el diseño vigente, el orden de las fuentes de verdad, buenas prácticas de RouterOS/netplan y la rúbrica. Se carga sola en tareas del proyecto o con `/ingeniero-redes-rurales`.
+- **Gemini:** [`GEMINI.md`](GEMINI.md).

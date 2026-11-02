@@ -15,6 +15,8 @@ El objetivo es desplegar una infraestructura de red para una plataforma de atenc
 - Almacenamiento local de 2–4 TB
 - Funcionalidad offline completa
 
+**Diseño vigente (consolidado):** Starlink Mini → MikroTik RouterOS 7 (router-on-a-stick, NAT) → UniFi UAP-AC-M + Raspberry Pi 5 "hub" (Ubuntu Server 24.04). Bloque `10.20.0.0/24`: VLAN 10 Administración `10.20.0.160/28`, VLAN 20 Salud `10.20.0.128/27`, VLAN 30 Pública `10.20.0.0/25`. Ver `README.md` y `.claude/skills/ingeniero-redes-rurales/SKILL.md`. Las versiones individuales de la Fase 1 (`fase1-plan/version-*`) son históricas.
+
 ## Comportamiento General
 
 - Ser conciso pero completo en las explicaciones técnicas.

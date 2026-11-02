@@ -1,0 +1,20 @@
+# /etc/netplan/01-hub.yaml — Red del servidor hub (Raspberry Pi 5, Ubuntu Server 24.04)
+# Fuente: documento "Fase 2.1 — Implementación física".
+# En la VM de GNS3 la interfaz se llama ens3; en la Raspberry Pi es eth0.
+#
+# Antes de aplicarlo, evitar que cloud-init reescriba la red:
+#   echo 'network: {config: disabled}' | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+#   sudo mv /etc/netplan/50-cloud-init.yaml /root/50-cloud-init.yaml.bak
+# Luego: sudo chmod 600 /etc/netplan/01-hub.yaml && sudo netplan generate && sudo netplan apply
+#
+# Cuando el hub tenga su propio DNS (dnsmasq, Fase 2) los nameservers pasan a 127.0.0.1.
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses: [10.20.0.162/28]        # VLAN 10 Administración
+      routes:
+        - to: default
+          via: 10.20.0.161               # gateway: vlan10-admin del MikroTik
+      nameservers:
+        addresses: [1.1.1.1, 9.9.9.9]

@@ -17,6 +17,14 @@ Este documento define el catálogo de habilidades, conocimientos especializados 
 
 ---
 
+## 📡 1.1 MikroTik, UniFi y Laboratorio Virtual
+* **MikroTik RouterOS 7:** bridge con `vlan-filtering`, interfaces VLAN, NAT `masquerade`, Hotspot, colas, relay DHCP, firewall entre VLAN, `/export` e `/import` de scripts `.rsc`.
+* **UniFi UAP-AC-M:** SSID asociado a VLAN, gestión sin etiqueta, alimentación PoE.
+* **GNS3 sobre Ubuntu (QEMU/KVM):** MikroTik CHR, nodo NAT (libvirt `virbr0`), switch como AP simulado, clientes Docker (webterm, Alpine), nodo Cloud para integrar hardware físico, capturas con Wireshark.
+* **Netplan y cloud-init** en Ubuntu Server 24.04 (IP fija del hub).
+
+---
+
 ## 💾 2. Proxy, Caché y Operación Offline
 * **Proxy y Políticas de Almacenamiento Caché:**
   * Configuración avanzada de `Squid Proxy` (modos explícito y transparente).
