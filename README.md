@@ -32,6 +32,8 @@ Al cerrar la Fase 1 cada integrante tenía su propia versión del plan. Las dos 
 | Carol (`10.20.0.0/22`, Mini PC, 4G, WireGuard) | `fase1-plan/version-carol/` | Histórico (se reutilizan VLSM, sumarización y matriz de tráfico) |
 | **Consolidado** (`10.20.0.0/24`, MikroTik + RPi5 + Starlink + UniFi) | `fase1-plan/laboratorio-gns3/`, `fase2-prototipo/` | **Vigente** |
 
+Paso de virtual a físico, un equipo a la vez: **2.1** RPi5 física (vía nodo Cloud de GNS3) → **2.2** MikroTik físico (CCR2004 prestado, puertos `ether9`–`ether12`) → AP UniFi → Starlink → energía. Detalle en [`fase2-prototipo/README.md`](fase2-prototipo/README.md).
+
 ---
 
 ## 3. Arquitectura vigente
@@ -82,7 +84,8 @@ NAT: `srcnat 10.20.0.0/24 → ether1 masquerade`. Hay doble traducción (MikroTi
 
 ### 3.4 Configuraciones en el repositorio
 
-- [`configs/mikrotik/hub-base.rsc`](configs/mikrotik/hub-base.rsc): configuración base del MikroTik (VLAN, gateways, DNS, NAT).
+- [`configs/mikrotik/hub-base.rsc`](configs/mikrotik/hub-base.rsc): configuración base del MikroTik con los puertos del plan (`ether1`–`ether4`).
+- [`configs/mikrotik/hub-ccr2004.rsc`](configs/mikrotik/hub-ccr2004.rsc): la misma configuración en el CCR2004 prestado (`ether9`–`ether12`), más NTP y servicios de gestión.
 - [`configs/servidor/01-hub.yaml`](configs/servidor/01-hub.yaml): netplan del hub (RPi5).
 
 ---
@@ -114,10 +117,12 @@ ProyectoRedesRurales/
 │   └── laboratorio-gns3/…GNS3_Hub.pdf     # Fase 1.2 — laboratorio virtual consolidado
 ├── fase2-prototipo/                       # Fase 2 — Prototipo
 │   ├── README.md
-│   └── Fase2.1_Implementacion_Fisica_RPi5.pdf
+│   ├── Fase2.1_Implementacion_Fisica_RPi5.pdf
+│   └── Fase2.2_MikroTik_CCR2004_Respaldo_Hub_Restauracion.pdf
 ├── fase3-operacion/README.md              # Fase 3 — Alcance pendiente
 ├── configs/                               # Configuraciones de equipos (ver configs/README.md)
-│   ├── mikrotik/hub-base.rsc              # RouterOS 7 base
+│   ├── mikrotik/hub-base.rsc              # RouterOS 7 base (puertos del plan)
+│   ├── mikrotik/hub-ccr2004.rsc           # RouterOS 7 en el CCR2004 prestado
 │   └── servidor/01-hub.yaml               # Netplan del hub RPi5
 ├── skills/skills.md                       # Catálogo de competencias del proyecto
 ├── .claude/skills/ingeniero-redes-rurales/SKILL.md   # Skill de Claude Code (ingeniero de redes)
@@ -139,7 +144,8 @@ ProyectoRedesRurales/
   - [ ] Aislamiento entre VLAN (se hace en la Fase 2 con el firewall).
 - [ ] **Fase 2 — Prototipo funcional**
   - [x] 2.1 Raspberry Pi 5 física (Ubuntu Server 24.04) integrada al laboratorio mediante un nodo Cloud.
-  - [ ] 2.2 MikroTik físico (`/import hub-base.rsc`).
+  - [x] 2.2 MikroTik físico: CCR2004 prestado con la configuración del hub (`ether9`–`ether12`), portátil como WAN, respaldo y restauración del otro grupo (05/11/2026, pruebas 1–10 Cumple).
+  - [ ] AP UniFi UAP-AC-M en la troncal.
   - [ ] DHCP/DNS en el hub con relay, Squid, Nginx, Docker y Mosquitto.
   - [ ] Firewall entre VLAN, Hotspot (portal cautivo) y colas.
   - [ ] Disco de 2–4 TB montado y optimizado.

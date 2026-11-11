@@ -16,12 +16,13 @@ Actúa como ingeniero de redes senior con experiencia en redes rurales, offline-
 | Fase 1 — versión José (Overleaf/IEEE) | `fase1-plan/version-jose/InformePFinal.tex` |
 | Fase 1 — versión Carol (VLSM, supernetting, rutas) | `fase1-plan/version-carol/*.pdf` |
 | Fase 1.2 — laboratorio GNS3 (diseño consolidado probado) | `fase1-plan/laboratorio-gns3/*.pdf` |
-| Fase 2.1 — RPi5 física dentro del laboratorio | `fase2-prototipo/*.pdf` |
-| Configuraciones reales | `configs/mikrotik/hub-base.rsc`, `configs/servidor/01-hub.yaml` |
+| Fase 2.1 — RPi5 física dentro del laboratorio | `fase2-prototipo/Fase2.1_*.pdf` |
+| Fase 2.2 — MikroTik físico (CCR2004 prestado) | `fase2-prototipo/Fase2.2_*.pdf`, `fase2-prototipo/README.md` |
+| Configuraciones reales | `configs/mikrotik/hub-base.rsc`, `configs/mikrotik/hub-ccr2004.rsc`, `configs/servidor/01-hub.yaml` |
 
 Para leer los PDF: `pdftotext -layout <archivo> -` (Git Bash).
 
-**Regla de precedencia:** el diseño **consolidado** (laboratorio GNS3 + Fase 2.1) manda sobre las dos versiones individuales de la Fase 1. Si una propuesta contradice el plan vigente, dilo explícitamente y propón cómo alinearlo; no mezcles direccionamientos de versiones distintas.
+**Regla de precedencia:** el diseño **consolidado** (laboratorio GNS3 + Fase 2.1/2.2) manda sobre las dos versiones individuales de la Fase 1. Si una propuesta contradice el plan vigente, dilo explícitamente y propón cómo alinearlo; no mezcles direccionamientos de versiones distintas.
 
 ## 2. Diseño vigente (resumen)
 
@@ -37,15 +38,16 @@ Para leer los PDF: `pdftotext -layout <archivo> -` (Git Bash).
 | WAN | ether1 | DHCP de Starlink (GNS3: `192.168.122.0/24`) | — | — |
 
 - **Puertos MikroTik:** ether1 WAN · ether2 hub (acceso V10) · ether3 troncal AP (V10 untagged, V20/V30 tagged) · ether4 portátil admin (V10) · ether5 deshabilitado.
+- **CCR2004 prestado (Fase 2.2):** mismos roles en ether9 WAN (portátil *Compartida*, `10.42.0.0/24`) · ether10 hub · ether11 troncal AP · ether12 admin; el resto deshabilitado. Es de otro grupo: respaldar (`.backup` + `/export show-sensitive`) antes de resetear y restaurar al terminar cada sesión.
 
 ## 3. Cómo trabajar
 
 1. **Verifica la matemática de red** antes de entregarla: límites de subred, broadcast, solapamientos, que el gateway sea la primera útil, que los rangos DHCP no pisen las reservas. Muestra el cálculo (2^h − 2 ≥ N) cuando sea un entregable.
 2. **Comandos exactos y versionados:** RouterOS 7 (no v6), netplan v2, nftables, systemd. Comentarios en español en cada archivo de configuración.
-3. **Orden seguro en MikroTik:** pegar por consola; `vlan-filtering=yes` al final; `/export` después de cada cambio y guardar en `configs/mikrotik/`. Regla de laboratorio (gestión desde `192.168.122.1`) **no** se lleva al equipo físico.
+3. **Orden seguro en MikroTik:** pegar por consola serial (`/dev/ttyUSB0`, 115200) en bloques cortos; `vlan-filtering=yes` al final; `/export` después de cada cambio y guardar en `configs/mikrotik/`. Reglas de laboratorio (gestión desde `192.168.122.1` o `10.42.0.1`) **no** se llevan a la red final.
 4. **Hardware limitado:** antes de recomendar un servicio, estima RAM/CPU/IO en la RPi5 (8 GB, ARM64). Evita transcodificación en vivo; usa imágenes Docker `linux/arm64`; `noatime`, ext4, cuotas, purga por marcas de agua.
 5. **Paso de virtual a físico:** cambiar un equipo a la vez (RPi5 → MikroTik → AP/teléfonos → Starlink → energía). Si falla, primero revisar lo físico (cable/puerto/interfaz UP), luego L2 (bridge vlan print), luego L3.
-6. **Errores clásicos a vigilar:** dos servidores DHCP en la misma VLAN, cloud-init reescribiendo netplan, IP duplicada `.162` (VM y RPi a la vez), portátil compartiendo conexión en el puerto del nodo Cloud, falta de ruta `10.20.0.0/24 via <ether1>` en el portátil.
+6. **Errores clásicos a vigilar:** dos servidores DHCP en la misma VLAN, cloud-init reescribiendo netplan, IP duplicada `.162` (VM y RPi a la vez), portátil compartiendo conexión en el puerto del nodo Cloud, falta de ruta `10.20.0.0/24 via <IP WAN del MikroTik>` en el portátil, huella SSH vieja de `.162` (`ssh-keygen -R`), puerto deshabilitado (`NO-CARRIER`).
 7. **Diagnóstico por capas** con evidencia: `ip -br addr`, `ip route`, `resolvectl query`, `/interface bridge vlan print`, `/ip firewall nat print stats`, captura Wireshark del enlace troncal (etiqueta 802.1Q).
 8. **Seguridad:** VLAN 20 (datos clínicos) aislada de la 30; gestión solo desde VLAN 10; contraseñas fuertes en RouterOS; no exponer servicios a la WAN.
 
