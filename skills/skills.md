@@ -49,8 +49,9 @@ Este documento define el catálogo de habilidades, conocimientos especializados 
 ---
 
 ## 🐳 4. Virtualización y Despliegue de Servicios (DevOps / Contenedores)
-* **Docker & Docker Compose:**
-  * Modularización de servicios en contenedores independientes (Squid, Nginx, Jellyfin, Dashboard Web, DNS).
+* **systemd y paquetes nativos (Fase 2):** dnsmasq, chrony, Nginx, Squid y Kiwix instalados con `apt`, con `RequiresMountsFor=/srv/cdn` y `Restart=on-failure`. Menos RAM que contenedores en la RPi5.
+* **Docker & Docker Compose (Fase 3, si se justifica):**
+  * Servicios nuevos en contenedores `linux/arm64` (Jellyfin, Mosquitto, dashboard).
   * Configuración de redes internas en Docker (`bridge`, `macvlan`, `host`) y volúmenes persistentes vinculados al almacenamiento masivo externo.
   * Políticas de reinicio automático ante cortes intempestivos de energía (`restart: always` / `unless-stopped`).
 * **Servidores Web e Interfaces de Usuario:**

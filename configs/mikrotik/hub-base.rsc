@@ -5,8 +5,7 @@
 #
 # IMPORTANTE: pegar SIEMPRE por consola (no por red): al activar
 # vlan-filtering se puede perder la conexión de gestión.
-# Pendiente: reemplazar este archivo por la salida real de `/export`
-# del CHR y, después, del MikroTik físico (ajustar nombres de puertos).
+# El /export real del MikroTik físico está en hub-ccr2004-2026-11-17.rsc.
 # Aún NO incluye Hotspot, colas, relay DHCP ni firewall entre VLAN (Fase 2).
 # ============================================================================
 
