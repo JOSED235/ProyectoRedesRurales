@@ -118,7 +118,8 @@ ProyectoRedesRurales/
 ├── docs/                                  # Material oficial del curso e informe de avance
 │   ├── Enunciado.txt
 │   ├── Rúbrica Proyecto Redes Rurales.xlsx
-│   └── InformeAvance.tex                  # Informe de avance IEEE (Fases 1 a 2.3, 19/11/2026)
+│   ├── InformeAvance.tex                  # Informe de avance IEEE (Fases 1 a 2.3, 19/11/2026)
+│   └── InformeAvance.pdf                  # PDF compilado para la entrega
 ├── fase1-plan/                            # Fase 1 — Plan de proyecto
 │   ├── README.md                          # Comparación de versiones y diseño consolidado
 │   ├── version-jose/InformePFinal.tex     # Informe IEEE (versión José)
@@ -162,7 +163,7 @@ ProyectoRedesRurales/
   - [ ] 2.3 Pruebas P1–P15 con capturas (11 de 15 OK el 18/11; faltan P1, P10, P12 y P13).
   - [ ] 2.3 Portal y páginas del Hotspot rediseñados (en el repo el 19/11; falta subirlos y probarlos en el lab).
   - [ ] Disco de 2–4 TB definitivo (hoy: disco USB prestado o archivo de 10 GB).
-- [x] Informe de avance IEEE (Fases 1 a 2.3): [`docs/InformeAvance.tex`](docs/InformeAvance.tex), se compila en Overleaf.
+- [x] Informe de avance IEEE (Fases 1 a 2.3): [`docs/InformeAvance.tex`](docs/InformeAvance.tex) y [PDF](docs/InformeAvance.pdf) (compilado con `texlive/texlive:latest-full`).
 - [ ] **Fase 3 — Sistema plenamente operacional** (Jellyfin, purga automática, dashboard con búsqueda, conmutación online/offline, energía).
 
 ---

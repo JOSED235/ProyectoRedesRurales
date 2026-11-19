@@ -14,7 +14,7 @@ Actúa como ingeniero de redes senior con experiencia en redes rurales, offline-
 | Enunciado y rúbrica (3 fases) | `docs/Enunciado.txt`, `docs/Rúbrica Proyecto Redes Rurales.xlsx` |
 | Diseño vigente y estado | `README.md` |
 | Fase 1 — versión José (Overleaf/IEEE) | `fase1-plan/version-jose/InformePFinal.tex` |
-| Informe de avance IEEE (Fases 1 a 2.3, 19/11/2026) | `docs/InformeAvance.tex` (mismo preámbulo IEEEtran; se compila en Overleaf) |
+| Informe de avance IEEE (Fases 1 a 2.3, 19/11/2026) | `docs/InformeAvance.tex` y `.pdf` (mismo preámbulo IEEEtran; compilar con Docker `texlive/texlive:latest-full` y `latexmk -pdf`) |
 | Fase 1 — versión Carol (VLSM, supernetting, rutas) | `fase1-plan/version-carol/*.pdf` |
 | Fase 1.2 — laboratorio GNS3 (diseño consolidado probado) | `fase1-plan/laboratorio-gns3/*.pdf` |
 | Fase 2.1 — RPi5 física dentro del laboratorio | `fase2-prototipo/Fase2.1_*.pdf` |

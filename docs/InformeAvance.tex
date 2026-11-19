@@ -48,12 +48,7 @@
 \title{Infraestructura de Red Local Autónoma para Atención Móvil Comunitaria en Entornos Rurales: Informe de Avance (Fases 1 a 2.3)}
 
 \author{
-\IEEEauthorblockN{José David Rodríguez Pinilla}
-\IEEEauthorblockA{\textit{Código: A00407151}}
-\and
-\IEEEauthorblockN{Carol Andrea Mosquera}
-\IEEEauthorblockA{\textit{Código: A00403934}}
-\and
+\IEEEauthorblockN{José David Rodríguez Pinilla (A00407151) \quad Carol Andrea Mosquera (A00403934)}
 \IEEEauthorblockA{\textit{Profesor: Andrés Navarro Cadavid, Ph.D.} \\
 \textit{Infraestructura de Redes 2} \\
 \textit{Departamento de Tecnologías de Información y Comunicaciones} \\
@@ -240,7 +235,7 @@ P15 & Conectividad & Límite de ancho de banda & $\approx$2~Mbps por usuario, co
 \item \textbf{Servicios caídos al arrancar:} \texttt{/etc/fstab} tenía dos montajes con la etiqueta \texttt{HUBDATA} en \texttt{/srv/cdn}. Se dejó una sola línea y se copiaron los datos al disco USB.
 \item \textbf{Fecha incorrecta en la Raspberry:} no tiene RTC con pila y arrancó sin Internet, así que el certificado aparecía como aún no válido. Se reinició chrony con Internet; la solución definitiva (pila del RTC) queda para la Fase~3.
 \item \textbf{Comandos de varias líneas por SSH fallan en RouterOS:} cada línea pierde el menú; se escribe la ruta completa en cada comando.
-\item \textbf{SSH aceptaba contraseña:} quedó \texttt{PasswordAuthentication yes} tras un acceso de emergencia; se volvió a \texttt{no} y se verificó con P2.
+\item \textbf{SSH aceptaba contraseña:} tras un acceso de emergencia, la opción \texttt{PasswordAuthentication} quedó en \texttt{yes}; se volvió a \texttt{no} y se verificó con P2.
 \item \textbf{Errores al pegar por consola serial:} se pierden caracteres con textos largos; se pega por bloques y se revisa cada resultado.
 \item \textbf{Acceso de gestión desde el portátil:} se agregaron reglas solo de laboratorio (\texttt{10.42.0.0/24}) que no se llevan a la red final.
 \end{itemize}
