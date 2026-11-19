@@ -32,7 +32,7 @@ Al cerrar la Fase 1 cada integrante tenía su propia versión del plan. Las dos 
 | Carol (`10.20.0.0/22`, Mini PC, 4G, WireGuard) | `fase1-plan/version-carol/` | Histórico (se reutilizan VLSM, sumarización y matriz de tráfico) |
 | **Consolidado** (`10.20.0.0/24`, MikroTik + RPi5 + Starlink + UniFi) | `fase1-plan/laboratorio-gns3/`, `fase2-prototipo/` | **Vigente** |
 
-Paso de virtual a físico, un equipo a la vez: **2.1** RPi5 física (vía nodo Cloud de GNS3) → **2.2** MikroTik físico (CCR2004 prestado, puertos `ether9`–`ether12`) → AP UniFi → Starlink → energía. Detalle en [`fase2-prototipo/README.md`](fase2-prototipo/README.md).
+Paso de virtual a físico, un equipo a la vez: **2.1** RPi5 física (vía nodo Cloud de GNS3) → **2.2** MikroTik físico (CCR2004 prestado, puertos `ether9`–`ether12`) → **2.3** servicios del hub, AP (TP-Link de laboratorio), Hotspot, firewall y colas → AP UniFi → Starlink → energía. Detalle en [`fase2-prototipo/README.md`](fase2-prototipo/README.md).
 
 ---
 
@@ -115,9 +115,10 @@ Estas ideas vienen de la versión de José ([`InformePFinal.tex`](fase1-plan/ver
 
 ```
 ProyectoRedesRurales/
-├── docs/                                  # Material oficial del curso
+├── docs/                                  # Material oficial del curso e informe de avance
 │   ├── Enunciado.txt
-│   └── Rúbrica Proyecto Redes Rurales.xlsx
+│   ├── Rúbrica Proyecto Redes Rurales.xlsx
+│   └── InformeAvance.tex                  # Informe de avance IEEE (Fases 1 a 2.3, 19/11/2026)
 ├── fase1-plan/                            # Fase 1 — Plan de proyecto
 │   ├── README.md                          # Comparación de versiones y diseño consolidado
 │   ├── version-jose/InformePFinal.tex     # Informe IEEE (versión José)
@@ -151,7 +152,7 @@ ProyectoRedesRurales/
 - [x] **Fase 1.2 — Laboratorio virtual GNS3** (27/10/2026)
   - [x] MikroTik CHR 7.25 con VLAN 10/20/30, NAT y salida a Internet.
   - [x] Servidor Ubuntu 24.04.5 en `10.20.0.162/28`, clientes por VLAN y tráfico 802.1Q verificado.
-  - [ ] Aislamiento entre VLAN (se hace en la Fase 2 con el firewall).
+  - [x] Aislamiento entre VLAN: se hizo en la Fase 2.3 con el firewall (prueba P14, 18/11/2026).
 - [ ] **Fase 2 — Prototipo funcional**
   - [x] 2.1 Raspberry Pi 5 física (Ubuntu Server 24.04) integrada al laboratorio mediante un nodo Cloud.
   - [x] 2.2 MikroTik físico: CCR2004 prestado con la configuración del hub (`ether9`–`ether12`), portátil como WAN, respaldo y restauración del otro grupo (05/11/2026, pruebas 1–10 Cumple).
@@ -161,6 +162,7 @@ ProyectoRedesRurales/
   - [ ] 2.3 Pruebas P1–P15 con capturas (11 de 15 OK el 18/11; faltan P1, P10, P12 y P13).
   - [ ] 2.3 Portal y páginas del Hotspot rediseñados (en el repo el 19/11; falta subirlos y probarlos en el lab).
   - [ ] Disco de 2–4 TB definitivo (hoy: disco USB prestado o archivo de 10 GB).
+- [x] Informe de avance IEEE (Fases 1 a 2.3): [`docs/InformeAvance.tex`](docs/InformeAvance.tex), se compila en Overleaf.
 - [ ] **Fase 3 — Sistema plenamente operacional** (Jellyfin, purga automática, dashboard con búsqueda, conmutación online/offline, energía).
 
 ---
