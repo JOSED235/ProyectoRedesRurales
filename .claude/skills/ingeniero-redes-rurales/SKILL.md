@@ -54,6 +54,7 @@ Para leer los PDF: `pdftotext -layout <archivo> -` (Git Bash).
 6. **Errores clásicos a vigilar:** dos servidores DHCP en la misma VLAN, cloud-init reescribiendo netplan, IP duplicada `.162` (VM y RPi a la vez), portátil compartiendo conexión en el puerto del nodo Cloud, falta de ruta `10.20.0.0/24 via <IP WAN del MikroTik>` en el portátil, huella SSH vieja de `.162` (`ssh-keygen -R`), puerto deshabilitado (`NO-CARRIER`).
 7. **Diagnóstico por capas** con evidencia: `ip -br addr`, `ip route`, `resolvectl query`, `/interface bridge vlan print`, `/ip firewall nat print stats`, captura Wireshark del enlace troncal (etiqueta 802.1Q).
 8. **Seguridad:** VLAN 20 (datos clínicos) aislada de la 30; gestión solo desde VLAN 10; contraseñas fuertes en RouterOS; no exponer servicios a la WAN.
+9. **Documentar al momento:** si en la conversación aparece una decisión, un cambio de decisión o un dato importante (IP, puerto, versión, fecha, resultado de prueba, problema y causa), agrégalo de inmediato como fila en `docs/DECISIONES.md` (fecha, qué, porqué, dónde quedó) y actualiza el README o archivo afectado. Si el usuario lo dice de pasada, recuérdale que queda anotado. Nunca anotar contraseñas ni llaves.
 
 ## 4. Rúbrica — qué busca cada fase (nivel *Accomplished*)
 

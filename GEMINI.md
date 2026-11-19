@@ -24,3 +24,4 @@ El objetivo es desplegar una infraestructura de red para una plataforma de atenc
 - Antes de sugerir una solución, considerar las restricciones de hardware (RPi5 / Mini PC i5).
 - Cuando se generen archivos de configuración, agregar comentarios explicativos en español.
 - Avisar si una decisión puede afectar el rendimiento en hardware limitado.
+- Toda decisión, cambio de decisión o dato importante se anota al momento en `docs/DECISIONES.md` (fecha, qué, porqué, dónde quedó) y se actualizan los README afectados. Nunca anotar contraseñas ni llaves.

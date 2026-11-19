@@ -118,8 +118,10 @@ ProyectoRedesRurales/
 ├── docs/                                  # Material oficial del curso e informe de avance
 │   ├── Enunciado.txt
 │   ├── Rúbrica Proyecto Redes Rurales.xlsx
+│   ├── DECISIONES.md                      # Registro de decisiones y datos importantes (con fecha)
 │   ├── InformeAvance.tex                  # Informe de avance IEEE (Fases 1 a 2.3, 19/11/2026)
-│   └── InformeAvance.pdf                  # PDF compilado para la entrega
+│   ├── InformeAvance.pdf                  # PDF compilado para la entrega
+│   └── img/                               # Capturas y fotos de evidencia usadas en el informe
 ├── fase1-plan/                            # Fase 1 — Plan de proyecto
 │   ├── README.md                          # Comparación de versiones y diseño consolidado
 │   ├── version-jose/InformePFinal.tex     # Informe IEEE (versión José)
@@ -169,6 +171,8 @@ ProyectoRedesRurales/
 ---
 
 ## 7. Herramientas de IA
+
+**Documentar al momento:** toda decisión, cambio de decisión o dato importante (IP, puerto, versión, fecha, resultado de prueba, problema y causa) se anota en el mismo momento en [`docs/DECISIONES.md`](docs/DECISIONES.md) con fecha, porqué y dónde quedó; luego se actualizan los README y el informe. Sin contraseñas ni llaves.
 
 - **Claude Code:** la skill [`ingeniero-redes-rurales`](.claude/skills/ingeniero-redes-rurales/SKILL.md) contiene el diseño vigente, el orden de las fuentes de verdad, buenas prácticas de RouterOS/netplan y la rúbrica. Se carga sola en tareas del proyecto o con `/ingeniero-redes-rurales`.
 - **Gemini:** [`GEMINI.md`](GEMINI.md).

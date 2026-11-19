@@ -8,6 +8,7 @@
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
+\graphicspath{{img/}}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
@@ -43,6 +44,13 @@
   lbl/.style={font=\tiny,midway,fill=white,inner sep=1pt}
 }
 
+% Captura de evidencia a lo ancho de una columna
+\newcommand{\evid}[3]{%
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\columnwidth,height=0.3\textheight,keepaspectratio]{#1}
+\caption{#2}\label{#3}
+\end{figure}}
+
 \begin{document}
 
 \title{Infraestructura de Red Local Autónoma para Atención Móvil Comunitaria en Entornos Rurales: Informe de Avance (Fases 1 a 2.3)}
@@ -58,24 +66,87 @@
 \maketitle
 
 \begin{abstract}
-Este informe de avance resume el trabajo realizado hasta el 19 de noviembre de 2026 en el diseño e implementación de una red local autónoma para una unidad móvil de atención comunitaria en zonas rurales. Las dos propuestas individuales de la Fase~1 se unificaron en un diseño consolidado: Starlink Mini como enlace WAN, un enrutador MikroTik con RouterOS~7 en modo \textit{router-on-a-stick}, un punto de acceso con un SSID por VLAN y una Raspberry Pi~5 como servidor de servicios locales, sobre el bloque \texttt{10.20.0.0/24} dividido con VLSM en tres VLAN. El diseño se validó primero en GNS3 y luego se llevó a hardware físico, un equipo a la vez. En la Fase~2.3 quedaron operativos el DHCP con relay, el DNS local, la hora de red, el portal web y la Wikipedia sin conexión por HTTPS, la caché HTTP transparente con Squid, el portal cautivo por VLAN, el firewall entre VLAN y las colas de ancho de banda. De las 15 pruebas definidas para el prototipo, 11 se cumplieron el 18/11/2026; las cuatro restantes requieren una sesión adicional de laboratorio.
+Este informe reúne todo el trabajo realizado hasta el 19 de noviembre de 2026 en el diseño e implementación de una red local autónoma para una unidad móvil de atención comunitaria en zonas rurales. Las dos propuestas individuales de la Fase~1 se unificaron en un diseño consolidado: Starlink Mini como enlace WAN, un enrutador MikroTik con RouterOS~7 en modo \textit{router-on-a-stick}, un punto de acceso con un SSID por VLAN y una Raspberry Pi~5 como servidor de servicios locales, sobre el bloque \texttt{10.20.0.0/24} dividido con VLSM en tres VLAN. El diseño se validó primero en un laboratorio virtual GNS3 y luego se llevó a hardware físico en tres etapas: la Raspberry Pi física dentro del laboratorio (2.1), el MikroTik físico (2.2) y los servicios, el punto de acceso y el portal cautivo (2.3). Hoy funcionan el DHCP con relay, el DNS local, la hora de red, el portal web y la Wikipedia sin conexión por HTTPS, la caché HTTP transparente con Squid, el portal cautivo por VLAN, el firewall entre VLAN y las colas de ancho de banda. De las 15 pruebas definidas para el prototipo, 11 se cumplieron el 18/11/2026; las cuatro restantes requieren una sesión adicional de laboratorio. Cada etapa se documenta con su procedimiento, sus decisiones, sus pruebas, sus evidencias y los problemas resueltos.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Redes rurales, offline-first, portal cautivo, MikroTik, RouterOS, VLAN 802.1Q, Squid, Raspberry Pi 5, Starlink.
+Redes rurales, offline-first, portal cautivo, MikroTik, RouterOS, VLAN 802.1Q, VLSM, Squid, Raspberry Pi 5, Starlink, GNS3.
 \end{IEEEkeywords}
 
 %=====================================================================
 \section{Introducción}
 Una unidad móvil de atención comunitaria opera en zonas donde la conexión a Internet es escasa o costosa y la energía es inestable. Necesita una red propia que funcione con un enlace intermitente y también en aislamiento total. El enunciado pide un portal cautivo que dé a cada grupo de interés la experiencia de una red independiente con Internet, y un proxy/caché local sobre una Mini PC o una Raspberry Pi, con 2--4~TB de almacenamiento y funcionamiento completo sin conexión.
 
-La red sigue la filosofía \textit{offline-first}: los servicios locales (portal, documentos, Wikipedia, DNS, DHCP, hora) no dependen de Internet, y el enlace satelital se usa para navegar y sincronizar cuando está disponible. La evaluación sigue una rúbrica de tres fases: plan de proyecto, prototipo funcional y sistema plenamente operacional. Este documento reporta el estado al cierre parcial de la Fase~2.
+La red sigue la filosofía \textit{offline-first}: los servicios locales (portal, documentos, Wikipedia, DNS, DHCP, hora) no dependen de Internet, y el enlace satelital se usa para navegar y sincronizar cuando está disponible. La evaluación sigue una rúbrica de tres fases: plan de proyecto, prototipo funcional y sistema plenamente operacional.
+
+\subsection{Metodología}
+El trabajo avanzó de lo virtual a lo físico, cambiando un equipo a la vez, para que cada falla tuviera una sola causa posible. Después de cada cambio en el enrutador se guarda un \texttt{/export} con fecha y cada sesión termina con respaldos. La Tabla~\ref{tab:avance} resume la cronología; las secciones siguientes detallan cada etapa.
+
+\begin{table*}[!t]
+\centering
+\caption{Cronología del proyecto}
+\label{tab:avance}
+\scriptsize
+\begin{tabularx}{\textwidth}{llYl}
+\toprule
+\textbf{Etapa} & \textbf{Fecha} & \textbf{Resultado} & \textbf{Estado} \\
+\midrule
+1 Plan & 16--20/10/2026 & Dos versiones individuales del plan (José: informe IEEE con caché, almacenamiento, cronograma, presupuesto y riesgos; Carol: topología, VLSM, sumarización, rutas y matriz de tráfico) & Cumple \\
+1 Consolidado & 20--26/10/2026 & Diseño único: MikroTik + Raspberry Pi 5 + Starlink Mini + UniFi, bloque \texttt{10.20.0.0/24} & Cumple \\
+1.2 GNS3 & 26--27/10/2026 & MikroTik CHR 7.25 + Ubuntu Server 24.04.5: VLAN 10/20/30, NAT, DNS, clientes por VLAN y etiquetas 802.1Q verificadas & Cumple \\
+2.1 RPi5 física & 30/10/2026 & La Raspberry Pi 5 física reemplaza a la VM del servidor y entra al laboratorio GNS3 por un nodo Cloud & Cumple \\
+2.2 MikroTik físico & 05/11/2026 & CCR2004 prestado: respaldo del otro grupo, configuración del hub, portátil como WAN, pruebas 1--10 y restauración & Cumple \\
+2.3 Servicios & 13--17/11/2026 & Pasos 1--6: ufw, SSH con llave, disco, dnsmasq + relay, chrony, Nginx HTTPS, Kiwix, Squid transparente, AP con dos SSID; respaldo completo el 17/11 & Cumple \\
+2.3 Portal y firewall & 18/11/2026 & Pasos 7--8: certificado, Hotspot, firewall entre VLAN y colas; 11 de 15 pruebas & En curso \\
+2.3 Rediseño & 19/11/2026 & Portal con categorías y búsqueda, guía del certificado y páginas del Hotspot en español & Falta probar \\
+\bottomrule
+\end{tabularx}
+\end{table*}
 
 %=====================================================================
-\section{Del plan individual al diseño consolidado}
-Al terminar la Fase~1 cada integrante tenía su propia versión del plan. La Tabla~\ref{tab:versiones} compara ambas con el diseño consolidado que hoy está vigente.
+\section{Fase 1: plan de proyecto}
 
-\begin{table*}[t]
+\subsection{Requisitos}
+La Tabla~\ref{tab:req} resume los requisitos que se derivaron del enunciado en la Fase~1 y cómo los atiende el diseño vigente.
+
+\begin{table}[!htbp]
+\centering
+\caption{Requisitos y cómo los atiende el diseño vigente}
+\label{tab:req}
+\scriptsize
+\begin{tabularx}{\columnwidth}{lYY}
+\toprule
+\textbf{ID} & \textbf{Requisito} & \textbf{Diseño vigente} \\
+\midrule
+RQ1 & Red independiente con Internet cuando haya enlace & MikroTik con NAT hacia Starlink \\
+RQ2 & Acceso diferenciado por grupo & Una VLAN y un portal cautivo por grupo \\
+RQ3 & Proxy local en Mini PC o Raspberry Pi & Squid transparente en la Raspberry Pi 5 \\
+RQ4 & Almacenamiento de 2--4~TB & Disco USB~3 en \texttt{/srv/cdn} (ext4, \texttt{noatime}) \\
+RQ5 & Operar sin Internet & DNS, DHCP, hora, portal y Wikipedia locales \\
+RQ6 & Tolerar cortes eléctricos & \texttt{nofail}, \texttt{RequiresMountsFor}, batería (Fase 3) \\
+RQ7 & Proteger datos de salud & SSID WPA2 en VLAN propia, firewall, HTTPS sin descifrar \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Versión de José}
+Plan en formato IEEE con la Raspberry Pi~5 como único nodo: enrutador (nftables), DHCP/DNS, portal cautivo (openNDS), proxy Squid y servidor de contenidos, sobre el bloque \texttt{10.10.0.0/16} (V10 Salud \texttt{/24}, V30 Portal \texttt{/23}, V99 Gestión \texttt{/28}) y un enlace LTE. Su principal aporte, que se mantiene, es la estrategia de caché y almacenamiento:
+\begin{itemize}
+\item Jerarquía de tres niveles: RAM (\texttt{cache\_mem}), NVMe para el sistema y objetos pequeños, y SSD de 2--4~TB para objetos grandes, ZIM de Kiwix y video.
+\item Presupuesto del SSD de 2~TB: 200~GB de caché Squid, 1000~GB de video, 100~GB de Kiwix, 150~GB de cursos, 20~GB de PDF, 100~GB de respaldos y 15~\% de reserva.
+\item Políticas \texttt{refresh\_pattern} por tipo de archivo, reemplazo \texttt{heap LFUDA} y HTTPS sin descifrar para no exponer datos de salud.
+\item Cronograma de 11 semanas con ruta crítica, compras en tres lotes (USD~794 con 15~\% de contingencia) y una matriz de 12 riesgos; los de mayor nivel son el corte eléctrico (20), la falta de enlace (20) y la sobrecarga de trabajo (16).
+\end{itemize}
+
+\subsection{Versión de Carol}
+Documento de topología, direccionamiento y enrutamiento con una Mini PC i5 como enrutador \textit{router-on-a-stick}, un router 4G y un túnel WireGuard (\texttt{172.31.255.0/30}) hacia un sitio central (\texttt{10.0.0.0/16}). Usa el bloque \texttt{10.20.0.0/22} con cuatro VLAN calculadas con VLSM a partir de la demanda con 50~\% de crecimiento: 30 Comunidad \texttt{/24}, 40 Invitados \texttt{/26}, 20 Personal \texttt{/27} y 10 Gestión \texttt{/28}, más un enlace \texttt{/30}. Desarrolla la sumarización (\texttt{/23} exacta, \texttt{/22} del sitio y \texttt{/20} multisitio), las tablas de rutas de cada equipo, los rangos DHCP y la matriz de tráfico permitido entre VLAN (Fig.~\ref{fig:carol}). De esta versión se mantienen el método VLSM, el prefijo \texttt{10.20} y la matriz de tráfico.
+
+\evid{f1-carol-topologia.png}{Topología lógica de la versión de Carol (Fase~1): servidor como gateway de cuatro VLAN, anunciadas como \texttt{10.20.0.0/22}.}{fig:carol}
+
+\subsection{Diseño consolidado}
+La Tabla~\ref{tab:versiones} compara ambas versiones con el diseño que hoy está vigente. Separar el enrutamiento (MikroTik) de los servicios (Raspberry Pi) evita que una falla o una actualización del servidor deje sin red a los usuarios, y el MikroTik trae de fábrica el portal cautivo, las colas y el firewall. Se redujo el bloque a \texttt{/24}, suficiente para una sola unidad móvil, y se dejaron tres VLAN.
+
+\begin{table*}[!t]
 \centering
 \caption{Versiones de la Fase~1 y diseño consolidado}
 \label{tab:versiones}
@@ -88,13 +159,12 @@ Enrutador L3 & Raspberry Pi 5 (nftables) & Mini PC i5 (router-on-a-stick) & Mikr
 Servidor & Raspberry Pi 5 & Mini PC i5 & Raspberry Pi 5 ``hub'', Ubuntu Server 24.04, IP fija en VLAN 10 \\
 WAN & Router LTE & Router 4G + WireGuard & Starlink Mini (bypass, CGNAT) \\
 Punto de acceso & Wi-Fi 6 genérico & 3 AP PoE & UniFi UAP-AC-M \\
+Portal cautivo & openNDS en la RPi5 & -- & Hotspot del MikroTik \\
 Bloque & \texttt{10.10.0.0/16} & \texttt{10.20.0.0/22} & \texttt{10.20.0.0/24} \\
 VLAN & 10 Salud, 30 Portal, 99 Gestión & 10 Gestión, 20 Personal, 30 Comunidad, 40 Invitados & 10 Administración, 20 Salud, 30 Pública \\
 \bottomrule
 \end{tabularx}
 \end{table*}
-
-De la versión de José se reutilizan la estrategia de caché y almacenamiento, el cronograma y la matriz de riesgos. De la versión de Carol se reutilizan el método VLSM, la sumarización y la matriz de tráfico entre VLAN. Separar el enrutamiento (MikroTik) de los servicios (Raspberry Pi) evita que una falla o una actualización del servidor deje sin red a los usuarios.
 
 %=====================================================================
 \section{Arquitectura vigente}
@@ -102,7 +172,7 @@ De la versión de José se reutilizan la estrategia de caché y almacenamiento, 
 \subsection{Equipos y topología}
 La Fig.~\ref{fig:topo} muestra la topología. El MikroTik enruta las tres VLAN sobre un \textit{bridge} con \texttt{vlan-filtering}, hace NAT hacia la WAN, reenvía el DHCP al servidor (relay), desvía el HTTP a Squid y aplica el portal cautivo, el firewall y las colas. El punto de acceso asocia cada SSID a una VLAN y recibe una troncal 802.1Q~\cite{ieee8021q}. La Raspberry Pi~5 ``hub'' concentra los servicios locales.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}[node distance=6mm and 4mm]
  \node[dev] (inet) {Internet};
@@ -125,83 +195,238 @@ La Fig.~\ref{fig:topo} muestra la topología. El MikroTik enruta las tres VLAN s
 \label{fig:topo}
 \end{figure}
 
-\subsection{Direccionamiento}
-El bloque \texttt{10.20.0.0/24} (RFC~1918~\cite{rfc1918}) se divide con VLSM según la demanda de cada grupo (Tabla~\ref{tab:vlsm}). Quedan libres \texttt{10.20.0.176/28} y \texttt{10.20.0.192/26} para crecer. El NAT es \texttt{srcnat 10.20.0.0/24} $\rightarrow$ WAN \texttt{masquerade}; con el CGNAT de Starlink hay doble traducción, de modo que desde Internet no se pueden iniciar conexiones hacia el sitio.
+\subsection{Direccionamiento y DHCP}
+El bloque \texttt{10.20.0.0/24} (RFC~1918~\cite{rfc1918}) se divide con VLSM según la demanda de cada grupo (Tabla~\ref{tab:vlsm}). Quedan libres \texttt{10.20.0.176/28} y \texttt{10.20.0.192/26} para crecer. El NAT es \texttt{srcnat 10.20.0.0/24} $\rightarrow$ WAN \texttt{masquerade}; con el CGNAT de Starlink hay doble traducción, de modo que desde Internet no se pueden iniciar conexiones hacia el sitio. El DHCP lo da la Raspberry para las tres VLAN; las concesiones son cortas donde rotan más usuarios.
 
-\begin{table}[t]
+\begin{table}[!htbp]
 \centering
-\caption{VLSM sobre \texttt{10.20.0.0/24}}
+\caption{VLSM sobre \texttt{10.20.0.0/24} y rangos DHCP}
 \label{tab:vlsm}
 \scriptsize
-\begin{tabularx}{\columnwidth}{lYlll}
+\begin{tabularx}{\columnwidth}{lYllYl}
 \toprule
-\textbf{VLAN} & \textbf{Uso} & \textbf{Subred} & \textbf{Gateway} & \textbf{Hosts} \\
+\textbf{VLAN} & \textbf{Uso} & \textbf{Subred} & \textbf{GW} & \textbf{DHCP} & \textbf{Conc.} \\
 \midrule
-10 & Administración & \texttt{.160/28} & \texttt{.161} & 14 \\
-20 & Salud (Hub-Salud) & \texttt{.128/27} & \texttt{.129} & 30 \\
-30 & Pública (Hub-Publica) & \texttt{.0/25} & \texttt{.1} & 126 \\
--- & Libre & \texttt{.176/28}, \texttt{.192/26} & -- & 14 + 62 \\
+10 & Admin. & \texttt{.160/28} & \texttt{.161} & \texttt{.170--.174} & 24 h \\
+20 & Salud & \texttt{.128/27} & \texttt{.129} & \texttt{.135--.158} & 8 h \\
+30 & Pública & \texttt{.0/25} & \texttt{.1} & \texttt{.10--.126} & 30 min \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\subsection{Equipos del laboratorio}
-El prototipo usa equipos prestados con la misma configuración lógica: un MikroTik CCR2004-16G-2S+ (RouterOS 7.13.5) compartido con otro grupo, con \texttt{ether9} WAN, \texttt{ether10} hub, \texttt{ether11} troncal del AP y \texttt{ether12} administración; un AP TP-Link TL-WA801ND en \texttt{10.20.0.163}; y un portátil que comparte su WiFi como WAN (\texttt{10.42.0.0/24}) en lugar de la Starlink. Como el MikroTik es compartido, cada sesión empieza respaldando la configuración del otro grupo (\texttt{.backup} y \texttt{/export show-sensitive}) y termina restaurándola.
+En la VLAN~10 hay direcciones fijas: \texttt{.161} MikroTik, \texttt{.162} Raspberry, \texttt{.163} punto de acceso y \texttt{.164--.169} reservadas.
 
-%=====================================================================
-\section{Avance por fase}
-La Tabla~\ref{tab:avance} resume el paso de lo virtual a lo físico, un equipo a la vez, para aislar fallas.
+\subsection{Matriz de tráfico}
+La Tabla~\ref{tab:matriz} es la política que aplica el firewall del MikroTik (Sección~\ref{sec:f23}). Se basa en la matriz de tráfico de la versión de Carol.
 
-\begin{table*}[t]
+\begin{table}[!htbp]
 \centering
-\caption{Avance del proyecto}
-\label{tab:avance}
+\caption{Tráfico permitido por origen}
+\label{tab:matriz}
 \scriptsize
-\begin{tabularx}{\textwidth}{llYl}
+\begin{tabularx}{\columnwidth}{lYYll}
 \toprule
-\textbf{Fase} & \textbf{Fecha} & \textbf{Resultado} & \textbf{Estado} \\
+\textbf{Origen} & \textbf{MikroTik} & \textbf{Raspberry} & \textbf{Otras VLAN} & \textbf{Internet} \\
 \midrule
-1 Plan & 16--20/10/2026 & Dos versiones individuales (IEEE, VLSM, rutas, caché, riesgos, cronograma) unificadas en el diseño consolidado & Cumple \\
-1.2 GNS3 & 27/10/2026 & MikroTik CHR 7.25 + Ubuntu Server 24.04.5: VLAN 10/20/30, NAT, DNS, clientes por VLAN y etiquetas 802.1Q verificadas en Wireshark & Cumple \\
-2.1 RPi5 física & 27/10--02/11/2026 & La Raspberry Pi 5 reemplaza a la VM del servidor y se integra al laboratorio GNS3 mediante un nodo Cloud & Cumple \\
-2.2 MikroTik físico & 05/11/2026 & CCR2004 con la configuración del hub, portátil como WAN, respaldo y restauración del otro grupo; pruebas 1--10 & Cumple \\
-2.3 Servicios & 17/11/2026 & Pasos 1--6: ufw, SSH con llave, disco, dnsmasq + relay, chrony, Nginx HTTPS, Kiwix, Squid transparente, AP con dos SSID & Cumple \\
-2.3 Portal y firewall & 18/11/2026 & Pasos 7--8: certificado, Hotspot, firewall entre VLAN y colas; 11 de 15 pruebas & En curso \\
-2.3 Rediseño & 19/11/2026 & Portal con categorías y búsqueda local, guía del certificado y páginas del Hotspot en español & Falta probar \\
+VLAN 10 & SSH, WinBox & Todo & Sí & Sí \\
+VLAN 20 & DHCP, DNS, portal & DNS, NTP, HTTP(S), MQTT & No & Tras sesión \\
+VLAN 30 & DHCP, DNS, portal & DNS, NTP, HTTP(S) & No & Tras portal \\
+Internet & No & No & -- & -- \\
 \bottomrule
 \end{tabularx}
-\end{table*}
+\end{table}
+
+\subsection{Puertos del enrutador}
+El plan usa \texttt{ether1}--\texttt{ether4}. En el laboratorio físico se usa un MikroTik prestado con otros números de puerto, pero la lógica es la misma (Tabla~\ref{tab:puertos}).
+
+\begin{table}[!htbp]
+\centering
+\caption{Puertos del MikroTik en cada etapa}
+\label{tab:puertos}
+\scriptsize
+\begin{tabularx}{\columnwidth}{YlllY}
+\toprule
+\textbf{Rol} & \textbf{Plan} & \textbf{GNS3} & \textbf{CCR2004} & \textbf{Modo} \\
+\midrule
+WAN & ether1 & ether1 & ether9 & DHCP, fuera del bridge \\
+Raspberry & ether2 & ether2 & ether10 & Acceso V10 \\
+Punto de acceso & ether3 & ether3 & ether11 & Troncal 10/20/30 \\
+Portátil admin & ether4 & ether4 & ether12 & Acceso V10 \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 %=====================================================================
-\section{Servicios implementados (Fase 2.3)}
+\section{Fase 1.2: laboratorio virtual en GNS3}
+Antes de usar hardware, el diseño se montó en GNS3 2.2.61 sobre Ubuntu con el mismo software de los equipos reales, para validar las capas 2 y 3. Se eligió Ubuntu en vez de Windows porque GNS3 corre las máquinas directo sobre KVM, sin la virtualización anidada de la GNS3~VM.
 
-\subsection{Servidor hub}
-Los servicios se instalan con \texttt{apt} y corren con systemd, sin Docker. Así consumen menos RAM, arrancan sin depender de otro servicio y la directiva \texttt{RequiresMountsFor=/srv/cdn} evita que arranquen si falta el disco. Docker queda para la Fase~3 si algún servicio lo justifica.
+La topología (Fig.~\ref{fig:gns3}) tiene un nodo NAT que hace de Starlink, un MikroTik CHR~7.25, una VM Ubuntu Server 24.04.5 como servidor, un switch de GNS3 que simula el AP (puerto 0 \texttt{dot1q} con nativa 10, puerto 1 VLAN 20, puerto 2 VLAN 30) y tres clientes livianos (Alpine Linux y dos webterm con Firefox) que hacen de portátil y teléfonos. El orden de montaje fue: NAT, MikroTik, switch, servidor y clientes, porque cada paso necesita al anterior.
 
+\evid{f12-gns3-topologia.png}{Topología del laboratorio GNS3: Starlink-NAT, MikroTik CHR, AP simulado, servidor Ubuntu y clientes de cada VLAN.}{fig:gns3}
+
+La Fig.~\ref{fig:chr} muestra el MikroTik con las VLAN 10, 20 y 30 en el \textit{bridge}, las tres direcciones de gateway y las rutas, y la Fig.~\ref{fig:srv12} al servidor llegando al gateway, a Internet y al DNS.
+
+\evid{f12-chr-vlan-direcciones.png}{MikroTik CHR: VLAN del \textit{bridge}, direcciones, rutas y \texttt{/export} guardado como \texttt{hub-base}.}{fig:chr}
+
+\evid{f12-servidor-pruebas.png}{Servidor virtual en \texttt{10.20.0.162/28}: ping al gateway, a \texttt{8.8.8.8} y a \texttt{ubuntu.com}.}{fig:srv12}
+
+\subsection{Pruebas}
+El 27/10/2026 se cumplieron: salida a Internet del MikroTik, VLAN en el \textit{bridge}, servidor con su IP fija, gateway, Internet y DNS desde el servidor, \texttt{apt} con \texttt{archive.ubuntu.com}, puertos del switch, WebFig del gateway y navegación desde los clientes de salud y pública, y las pruebas A1--A11 del cliente de administración. Las etiquetas 802.1Q se verificaron en Wireshark. El aislamiento entre VLAN quedó para la Fase~2, porque requiere el firewall. Se guardó el \texttt{/export} en \texttt{hub-base.rsc}.
+
+\subsection{Problemas resueltos}
+Se registraron 15 problemas del montaje (26--27/10). Los más relevantes:
 \begin{itemize}
-\item \textbf{Seguridad básica:} ufw activo, SSH solo con llave y para un único usuario.
-\item \textbf{Almacenamiento:} disco en \texttt{/srv/cdn}, ext4 con \texttt{noatime} y \texttt{nofail}.
-\item \textbf{dnsmasq}~\cite{dnsmasq}: DNS local \texttt{hub.lan} y DHCP de las tres VLAN por relay del MikroTik (rangos \texttt{.170--.174}, \texttt{.135--.158} y \texttt{.10--.126}).
-\item \textbf{chrony:} fuente de hora de la red, también sin Internet; el MikroTik se sincroniza con \texttt{10.20.0.162}.
-\item \textbf{Nginx}~\cite{nginx}: portal \texttt{portal.hub.lan}, documentos y Wikipedia sin conexión (Kiwix~\cite{kiwix}) por HTTPS, con un certificado \texttt{*.hub.lan} firmado por una CA de pruebas. El 19/11 se rediseñó el portal (categorías Educación, Salud y Ocio, búsqueda local y búsqueda en Kiwix) y se agregó una guía para instalar la CA en Android, iPhone y PC, servida también por HTTP; falta subirlos y probarlos en el laboratorio.
-\item \textbf{Squid}~\cite{squid}: caché HTTP transparente (\texttt{3129 intercept}).
+\item \textbf{uBridge no disponible:} el usuario se agregó al grupo, pero la sesión era anterior; se resolvió reiniciando.
+\item \textbf{Disco del MikroTik dañado:} un cierre inesperado de GNS3 dañó el \texttt{qcow2}; se recreó el nodo y se volvió a aplicar el script en un minuto. Lección: \texttt{/export} después de cada cambio.
+\item \textbf{Mirror de Ubuntu sin respuesta:} \texttt{co.archive.ubuntu.com} no respondía; se usó \texttt{archive.ubuntu.com}.
+\item \textbf{Clientes webterm sin red:} el contenedor arranca sin configuración; se fijó la IP según la VLAN del puerto.
 \end{itemize}
-
-\subsection{MikroTik}
-\begin{itemize}
-\item \textbf{Desvío a Squid:} ruta por política (\textit{mangle} \texttt{pbr-squid}, marca \texttt{to-proxy}) con \textit{netwatch}: si Squid cae, la regla se desactiva y la navegación sigue.
-\item \textbf{Portal cautivo (Hotspot):} uno por VLAN. Hub-Publica con HTTPS y prueba gratuita de 2~h (1/2~Mbps); Hub-Salud con usuario y clave locales, válidos sin Internet. El contenido local (\texttt{10.20.0.162}) está en el \textit{walled garden} y se ve sin iniciar sesión. Las páginas del portal (acceso, estado, cierre de sesión y errores) se tradujeron al español con el estilo del portal el 19/11.
-\item \textbf{Firewall:} 18 reglas sobre listas \texttt{LAN}/\texttt{WAN}. Solo la VLAN~10 gestiona el enrutador; todas las VLAN llegan al hub por DNS, NTP, HTTP y HTTPS; la VLAN~20 tiene MQTT (8883) reservado para la Fase~3; todo otro tráfico entre VLAN se descarta.
-\item \textbf{Colas:} \texttt{salud} con 3/10~Mbps garantizados y prioridad~1; \texttt{publica} con máximo de 5/20~Mbps para todo el grupo.
-\end{itemize}
-
-El firewall se aplicó por SSH con un \texttt{/system scheduler} que borraba las reglas a los 5~min si se perdía el acceso, y se canceló al comprobar que todo funcionaba.
 
 %=====================================================================
-\section{Pruebas}
-La Tabla~\ref{tab:pruebas} lista las pruebas del prototipo, alineadas con los criterios de la rúbrica.
+\section{Fase 2.1: Raspberry Pi 5 física}
+Primera etapa del paso a lo físico (30/10/2026): la Raspberry Pi~5 reemplaza a la VM del servidor, conectada por cable al portátil y unida al MikroTik virtual con un nodo Cloud de GNS3 (Fig.~\ref{fig:cloud}).
 
-\begin{table*}[t]
+\begin{enumerate}
+\item Se grabó Ubuntu Server 24.04 LTS de 64 bits con Raspberry Pi Imager (hostname \texttt{hub}, zona \texttt{America/Bogota}, SSH, sin WiFi) y se alimentó con la fuente oficial de 27~W.
+\item Se actualizó y reinició para cargar el kernel \texttt{6.8.0-1065}.
+\item Se apagó la VM del servidor para no duplicar \texttt{10.20.0.162}.
+\item Se deshabilitó la red de cloud-init, que podía reescribir la configuración en un reinicio, y se creó \texttt{/etc/netplan/01-hub.yaml} con la IP fija (Fig.~\ref{fig:rpiip}).
+\item El puerto Ethernet del portátil se dejó sin IPv4 ni IPv6, para que funcione solo como cable. Si quedaba en modo ``Compartida'' habría un segundo DHCP y un segundo gateway (\texttt{10.42.0.1}) dentro de la VLAN~10, y las pruebas de firewall, colas y portal darían resultados falsos.
+\end{enumerate}
+
+\evid{f21-gns3-nodo-cloud.png}{GNS3 con el nodo Cloud \texttt{rasberryFisica} (\texttt{enp46s0}) conectado a \texttt{ether2} del MikroTik.}{fig:cloud}
+
+\evid{f21-rpi-ip-fija.png}{Consola de la Raspberry física: \texttt{eth0} con \texttt{10.20.0.162/28}.}{fig:rpiip}
+
+Las pruebas (ping al gateway, a Internet y por nombre, SSH desde el cliente Alpine y desde el portátil, \texttt{apt update} y hora sincronizada) se cumplieron (Fig.~\ref{fig:rpiapt}).
+
+\evid{f21-rpi-apt-hora.png}{Raspberry física: \texttt{apt update} sin errores y reloj sincronizado en \texttt{America/Bogota}.}{fig:rpiapt}
+
+%=====================================================================
+\section{Fase 2.2: MikroTik físico}
+Segunda etapa (05/11/2026): el MikroTik deja de ser virtual y la Raspberry se conecta directo a él. Se usó un CCR2004-16G-2S+ con RouterOS 7.13.5 (\texttt{sw01}) que pertenece a otro grupo, así que cada sesión empieza respaldando su configuración y termina restaurándola.
+
+\subsection{Procedimiento}
+\begin{itemize}
+\item \textbf{A. Respaldo del otro grupo:} \texttt{/system backup save} y \texttt{/export show-sensitive} con la fecha. El portátil entró temporalmente a la VLAN~10 del otro grupo por \texttt{ether4} con una IP dentro de su rango SSH permitido, descargó los archivos por \texttt{scp}, los verificó y envió un ZIP con una nota de restauración (Fig.~\ref{fig:resp}).
+\item \textbf{B. Puertos:} el hub usa \texttt{ether9}--\texttt{ether12}, que el otro grupo tiene deshabilitados, para no mover sus cables; el resto queda deshabilitado (Fig.~\ref{fig:puertos}).
+\item \textbf{C. Configuración:} reset sin valores de fábrica y pegado por consola serial en cinco bloques: identidad y hora, puertos, \textit{bridge} y VLAN, direcciones/DHCP-client/DNS/NAT/NTP y servicios de gestión (solo SSH, WinBox y WebFig).
+\item \textbf{D. Portátil como WAN:} el portátil comparte su WiFi por el cable hacia \texttt{ether9} (red \texttt{10.42.0.0/24}), igual que la Starlink en modo bypass o el nodo NAT de GNS3 (Fig.~\ref{fig:wan}).
+\item \textbf{E. Cierre:} respaldo del hub, carga del respaldo del otro grupo y borrado de los archivos propios (Fig.~\ref{fig:rest}).
+\end{itemize}
+
+\evid{f22-respaldo-otro-grupo.png}{Respaldo de la configuración del otro grupo (\texttt{sw01-original-2026-11-05}) antes de resetear el equipo.}{fig:resp}
+
+\evid{f22-puertos-ccr2004.png}{Puertos del CCR2004 con la configuración del hub: solo \texttt{ether9}--\texttt{ether12} habilitados, con su función en el comentario.}{fig:puertos}
+
+\evid{f22-foto-ccr2004.png}{CCR2004 del laboratorio con los cables del hub en \texttt{ether9} y \texttt{ether10}.}{fig:foto22}
+
+\evid{f22-wan-dhcp-ping.png}{\texttt{ether9} recibe \texttt{10.42.0.116/24} del portátil; el MikroTik llega a \texttt{8.8.8.8} y resuelve \texttt{google.com}.}{fig:wan}
+
+\subsection{Pruebas}
+Se cumplieron las 10 pruebas: enlaces activos solo en los puertos del hub, cliente DHCP en \texttt{bound}, ping a Internet y a la Raspberry, MAC de la Raspberry en la VLAN~10, Raspberry hacia el gateway, Internet y DNS (Fig.~\ref{fig:rpi22}), \texttt{apt update}, SSH a los dos equipos y contador del NAT en aumento.
+
+\evid{f22-rpi-pruebas.png}{Raspberry conectada directo al MikroTik físico: ping al gateway, a \texttt{8.8.8.8} y a \texttt{ubuntu.com}.}{fig:rpi22}
+
+\evid{f22-restauracion.png}{Restauración de la configuración del otro grupo al terminar la sesión.}{fig:rest}
+
+\subsection{Problemas resueltos}
+\begin{itemize}
+\item Caracteres perdidos al pegar por consola serial: se pega por bloques y se revisa cada resultado.
+\item \texttt{scp} al equipo del otro grupo sin respuesta: la IP del portátil estaba fuera de su rango SSH permitido.
+\item \texttt{REMOTE HOST IDENTIFICATION HAS CHANGED} al entrar a la Raspberry: huella de la VM anterior; se borró con \texttt{ssh-keygen -R}.
+\end{itemize}
+
+%=====================================================================
+\section{Fase 2.3: servicios, punto de acceso y portal cautivo}\label{sec:f23}
+Tercera etapa, hecha en varias sesiones entre el 13 y el 18/11/2026 (Fig.~\ref{fig:montaje}). El orden importa: el punto de acceso va después del DHCP, porque sin él los celulares se conectan pero no reciben dirección, y el portal cautivo va después del DNS y del certificado.
+
+\evid{f23-foto-montaje.png}{Montaje de la Fase 2.3: CCR2004, Raspberry Pi~5 y disco USB.}{fig:montaje}
+
+\textbf{Decisión de despliegue:} en el prototipo los servicios se instalan con \texttt{apt} y corren con systemd, sin Docker. Así gastan menos RAM, arrancan sin depender de otro servicio y \texttt{RequiresMountsFor=/srv/cdn} impide que arranquen si falta el disco. Docker queda para la Fase~3 si algún servicio lo justifica.
+
+\subsection{Paso 1: seguridad y disco de la Raspberry}
+\begin{itemize}
+\item Actualizaciones automáticas con \texttt{unattended-upgrades}.
+\item ufw con política \textit{deny} de entrada; solo se abren SSH desde la VLAN~10, DNS, DHCP, NTP, HTTP/HTTPS y Squid hacia \texttt{10.20.0.0/24}, más una regla del portátil solo para el laboratorio (Fig.~\ref{fig:ufw}).
+\item SSH solo con llave, sin \texttt{root} y solo para el usuario \texttt{carol}.
+\item Disco USB de 465~GB revisado con SMART antes de usarlo (Fig.~\ref{fig:smart}), formateado en ext4 con 1~\% de reserva y un inodo cada 64~KiB, y montado en \texttt{/srv/cdn} con \texttt{noatime,nofail} (Fig.~\ref{fig:disco}). \texttt{noatime} reduce escrituras; \texttt{nofail} deja arrancar la Raspberry aunque el disco falle, para que el DNS y el DHCP sigan funcionando.
+\end{itemize}
+
+\evid{f23-ufw.png}{Reglas de ufw: solo los servicios del hub y solo hacia su red.}{fig:ufw}
+
+\evid{f23-smart-disco.png}{Salud del disco usado: SMART \texttt{PASSED} y cero sectores reasignados, pendientes o incorregibles.}{fig:smart}
+
+\evid{f23-disco-srv-cdn.png}{Formato del disco, línea de \texttt{/etc/fstab} y montaje en \texttt{/srv/cdn} con \texttt{noatime}.}{fig:disco}
+
+\subsection{Paso 2: DNS y DHCP con relay}
+dnsmasq~\cite{dnsmasq} escucha solo en \texttt{eth0}, responde el dominio local \texttt{hub.lan} (\texttt{portal}, \texttt{cdn}, \texttt{wiki}, \texttt{mikrotik}, \texttt{ap}) aunque no haya Internet, pregunta afuera a \texttt{1.1.1.1} y \texttt{9.9.9.9} y guarda 10\,000 respuestas en caché, de modo que lo repetido no gasta enlace satelital. Entrega los tres rangos de la Tabla~\ref{tab:vlsm} con el gateway de cada red y la Raspberry como DNS y servidor de hora. Como la Raspberry solo está en la VLAN~10, el MikroTik reenvía las peticiones de las VLAN 20 y 30 con un relay por VLAN (Fig.~\ref{fig:relay}); el \texttt{local-address} le indica a dnsmasq de qué red viene cada pedido.
+
+\evid{f23-relay-dhcp.png}{Relay DHCP en el MikroTik: \texttt{relay-salud} y \texttt{relay-publica} hacia \texttt{10.20.0.162}.}{fig:relay}
+
+\subsection{Paso 3: hora de red}
+chrony toma la hora de Internet cuando hay conexión y la sigue dando sin ella (\texttt{local stratum 10}). El MikroTik dejó \texttt{pool.ntp.org} y se sincroniza con la Raspberry (Fig.~\ref{fig:ntp}); los celulares la reciben por DHCP. Sin hora correcta, los certificados HTTPS fallan.
+
+\evid{f23-ntp-sincronizado.png}{Cliente NTP del MikroTik \texttt{synchronized} con \texttt{10.20.0.162}.}{fig:ntp}
+
+\subsection{Paso 4: contenido por HTTPS}
+Se creó una CA de pruebas y, con ella, un certificado comodín \texttt{*.hub.lan} de 365 días (los navegadores rechazan los de más de 398), válido para el portal, la CDN, la wiki y las páginas del portal cautivo (Fig.~\ref{fig:cert}). Nginx~\cite{nginx} redirige todo el HTTP a HTTPS, salvo la descarga de la CA; sirve el portal, sitios educativos copiados con \texttt{wget --mirror}, documentos PDF con listado automático y caché de 30 días en el celular, y pone HTTPS delante de Kiwix~\cite{kiwix}, que sirve una Wikipedia en español sin conexión solo en \texttt{127.0.0.1:8080}. Cuando el profesor confirme un dominio, el certificado se reemplazará por uno de Let's Encrypt con validación DNS-01, porque desde Internet no se puede entrar al hub.
+
+\evid{f23-certificado.png}{Certificado \texttt{*.hub.lan} emitido por la CA de pruebas, con \texttt{DNS:hub.lan}, \texttt{DNS:*.hub.lan} e \texttt{IP:10.20.0.162}.}{fig:cert}
+
+\subsection{Paso 5: caché Squid y desvío}
+Squid~\cite{squid} guarda lo que se descarga por HTTP, así la segunda persona que lo pide no gasta otra vez el enlace. Solo la red del hub puede usarlo. Usa 256~MB de RAM, objetos de hasta 512~MB, reemplazo \texttt{heap LFUDA}, \texttt{refresh\_pattern} largos para instaladores, PDF y video, y 4~GB de caché en disco mientras llega el SSD definitivo (unos 50~GB en una Pi de 4~GB de RAM, porque Squid usa unos 10~MB de RAM por GB de caché). El HTTPS sale directo: no se descifra, para no exponer datos de salud ni obligar a instalar certificados falsos.
+
+El MikroTik marca el HTTP de las VLAN 20 y 30 hacia Internet (regla \texttt{pbr-squid}) y lo envía por la tabla \texttt{to-proxy}, cuya única salida es la Raspberry; allí iptables lo pasa al puerto \texttt{3129 intercept} (Fig.~\ref{fig:pbr}). Hay dos protecciones: \texttt{check-gateway=ping} desactiva la ruta si la Raspberry no responde, y un \textit{netwatch} desactiva la regla si Squid se cae. En ambos casos se pierde la caché, no la navegación. La Fig.~\ref{fig:squidlog} muestra un celular de Hub-Publica pasando por Squid.
+
+\evid{f23-pbr-squid.png}{Tabla \texttt{to-proxy}, ruta hacia la Raspberry, regla \texttt{pbr-squid} y \textit{netwatch} en el MikroTik.}{fig:pbr}
+
+\evid{f23-squid-log.png}{Registro de Squid: tráfico del celular \texttt{10.20.0.64} con \texttt{TCP\_MISS} y \texttt{TCP\_HIT}.}{fig:squidlog}
+
+\subsection{Paso 6: punto de acceso}
+El prototipo usa el TP-Link TL-WA801ND del laboratorio; el UniFi UAP-AC-M sigue siendo el del diseño final, con la misma configuración SSID$\leftrightarrow$VLAN. Se respaldó su configuración original, se desactivó su DHCP, se activó Multi-SSID con VLAN (Hub-Salud en la 20 con WPA2-PSK AES; Hub-Publica en la 30, abierta porque el control lo hace el portal) y se le dio la IP fija \texttt{10.20.0.163} (Fig.~\ref{fig:tplink}). No se creó SSID de administración: la VLAN~10 viaja sin etiqueta en la troncal y la gestión se hace por cable. El AP se conectó a \texttt{ether11} y responde desde el MikroTik (Fig.~\ref{fig:pingap}).
+
+\evid{f23-tplink-multissid.png}{TP-Link en Multi-SSID con VLAN: Hub-Salud en la VLAN 20 y Hub-Publica en la VLAN 30.}{fig:tplink}
+
+\evid{f23-foto-ap.png}{Punto de acceso TP-Link TL-WA801ND conectado a la troncal \texttt{ether11}.}{fig:fotoap}
+
+\evid{f23-ping-ap.png}{\texttt{ether11} activo y ping del MikroTik al punto de acceso \texttt{10.20.0.163}.}{fig:pingap}
+
+Con un celular se comprobó que aparecen los dos SSID y que cada red entrega una IP de su rango (Figs.~\ref{fig:ssid} y~\ref{fig:cel}). Después se instaló la CA de pruebas en el celular y \texttt{https://portal.hub.lan} abrió con candado.
+
+\evid{f23-celular-ssid.png}{Los SSID Hub-Salud (protegida) y Hub-Publica (abierta) vistos desde un celular.}{fig:ssid}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.48\columnwidth]{f23-celular-publica.png}\hfill
+\includegraphics[width=0.48\columnwidth]{f23-celular-salud.png}
+\caption{DHCP por relay: el celular recibe \texttt{10.20.0.64} en Hub-Publica (abierta) y \texttt{10.20.0.148} en Hub-Salud (WPA2).}
+\label{fig:cel}
+\end{figure}
+
+\subsection{Paso 7: portal cautivo}
+El portal lo hace el Hotspot del MikroTik, porque es la puerta de enlace de las VLAN y decide quién sale a Internet. El certificado \texttt{*.hub.lan} se importó al MikroTik y la copia temporal de la llave se borró de los tres equipos.
+\begin{itemize}
+\item \textbf{Hub-Publica} (\texttt{wifi-publica.hub.lan}): el portal aparece solo, ofrece ``Ver contenido sin conexión'' sin iniciar sesión y una prueba gratuita de 2~h a 1/2~Mbps.
+\item \textbf{Hub-Salud} (\texttt{wifi-salud.hub.lan}): pide usuario y clave, guardados en el MikroTik para que funcione sin Internet; sesiones de 8~h, dos dispositivos por usuario.
+\item Las dos páginas van por HTTPS. El Hotspot no reparte IP (lo sigue haciendo dnsmasq por relay) y la Raspberry está en el \textit{walled garden}, así que el contenido local se ve sin iniciar sesión. El desvío a Squid solo actúa sobre usuarios que ya pasaron el portal.
+\end{itemize}
+
+\subsection{Paso 8: firewall y colas}
+El firewall tiene 18 reglas sobre las listas \texttt{LAN}/\texttt{WAN} que aplican la Tabla~\ref{tab:matriz}: aceptar respuestas, descartar inválidos, gestión solo desde la VLAN~10, DNS y relay DHCP hacia el MikroTik, DNS/NTP/HTTP/HTTPS hacia la Raspberry, MQTT (8883) reservado para la VLAN~20, HTTP desviado a Squid, salida a Internet y descarte de todo lo demás, incluido el tráfico entre VLAN. Dos reglas son solo del laboratorio (gestión desde el portátil) y se borran con la Starlink real. Se aplicó por SSH con un \texttt{/system scheduler} que borraba las reglas a los 5~min si se perdía el acceso, y se canceló al comprobar que todo funcionaba.
+
+Las colas aplican los valores de la Fase~1: \texttt{salud} con 3/10~Mbps garantizados y prioridad~1; \texttt{publica} con un máximo de 5/20~Mbps para todo el grupo y, dentro de ella, una cola de 1/2~Mbps por usuario creada por el Hotspot. Con 50 usuarios públicos, cada uno tiene al menos 0,4~Mbps. Se ajustarán al medir la velocidad real de la Starlink.
+
+\subsection{Sesión del 18/11 y rediseño del 19/11}
+El 18/11 se aplicaron los pasos 7 y 8 sobre el respaldo del 17/11 y se comprobó, comparando los \texttt{/export}, que el \textit{bridge}, las VLAN, los puertos, las IP, el relay, el NAT y el desvío a Squid no cambiaron: solo hubo líneas agregadas. Se guardaron \texttt{hub-ccr2004-2026-11-18.backup} y su \texttt{/export}.
+
+El 19/11, sin laboratorio, se rediseñaron el portal (categorías Educación, Salud y Ocio, búsqueda local sin tildes, documentos leídos del listado de cada categoría y búsqueda en Kiwix), una guía para instalar la CA en Android, iPhone y PC servida también por HTTP, y todas las páginas del Hotspot en español con el estilo del portal (acceso, estado, cierre de sesión y errores). Falta subirlos y probarlos en el laboratorio.
+
+%=====================================================================
+\section{Pruebas del prototipo}
+La Tabla~\ref{tab:pruebas} lista las pruebas, alineadas con los criterios de la rúbrica. Las Figs.~\ref{fig:ufw}--\ref{fig:cel} muestran la evidencia de varias de ellas.
+
+\begin{table*}[!t]
 \centering
 \caption{Pruebas de la Fase 2.3 (estado al 18/11/2026)}
 \label{tab:pruebas}
@@ -230,21 +455,22 @@ P15 & Conectividad & Límite de ancho de banda & $\approx$2~Mbps por usuario, co
 \end{table*}
 
 %=====================================================================
-\section{Problemas encontrados y soluciones}
+\section{Problemas de la Fase 2.3 y soluciones}
 \begin{itemize}
-\item \textbf{Servicios caídos al arrancar:} \texttt{/etc/fstab} tenía dos montajes con la etiqueta \texttt{HUBDATA} en \texttt{/srv/cdn}. Se dejó una sola línea y se copiaron los datos al disco USB.
-\item \textbf{Fecha incorrecta en la Raspberry:} no tiene RTC con pila y arrancó sin Internet, así que el certificado aparecía como aún no válido. Se reinició chrony con Internet; la solución definitiva (pila del RTC) queda para la Fase~3.
+\item \textbf{Servicios caídos al arrancar:} \texttt{/etc/fstab} tenía dos montajes con la etiqueta \texttt{HUBDATA} en \texttt{/srv/cdn} (el disco USB y el archivo de 10~GB de reemplazo), y el contenido estaba solo en el archivo. Se copió al disco USB y se dejó una sola línea activa.
+\item \textbf{Fecha incorrecta en la Raspberry:} no tiene RTC con pila y arrancó sin Internet, así que el certificado aparecía como aún no válido y el MikroTik quedaba en \texttt{waiting}. Se reinició chrony con Internet; la solución definitiva (pila del RTC) queda para la Fase~3.
 \item \textbf{Comandos de varias líneas por SSH fallan en RouterOS:} cada línea pierde el menú; se escribe la ruta completa en cada comando.
 \item \textbf{SSH aceptaba contraseña:} tras un acceso de emergencia, la opción \texttt{PasswordAuthentication} quedó en \texttt{yes}; se volvió a \texttt{no} y se verificó con P2.
-\item \textbf{Errores al pegar por consola serial:} se pierden caracteres con textos largos; se pega por bloques y se revisa cada resultado.
-\item \textbf{Acceso de gestión desde el portátil:} se agregaron reglas solo de laboratorio (\texttt{10.42.0.0/24}) que no se llevan a la red final.
+\item \textbf{SSH colgado tras activar ufw:} faltaba la regla del portátil; se agregó desde la consola local.
+\item \textbf{El portátil no veía la web del AP:} el AP solo responde a su red; se usó un NAT de laboratorio que se borra al cerrar.
+\item \textbf{Enlace intermitente en \texttt{ether9}:} cable flojo; se cambió y se repitió la ruta hacia la red del hub.
 \end{itemize}
 
 %=====================================================================
 \section{Estado frente a la rúbrica y próximos pasos}
 La Tabla~\ref{tab:rubrica} relaciona los criterios de la Fase~2 con la evidencia actual.
 
-\begin{table}[t]
+\begin{table}[!htbp]
 \centering
 \caption{Criterios de la Fase 2}
 \label{tab:rubrica}
@@ -253,7 +479,7 @@ La Tabla~\ref{tab:rubrica} relaciona los criterios de la Fase~2 con la evidencia
 \toprule
 \textbf{Criterio} & \textbf{Evidencia} & \textbf{Estado} \\
 \midrule
-SO optimizado para 2--4~TB y seguridad básica & ext4 \texttt{noatime}, ufw, SSH con llave (P2); falta P1 y disco definitivo & Parcial \\
+SO optimizado para 2--4~TB y seguridad básica & ext4 \texttt{noatime}, SMART, ufw, SSH con llave (P2); falta P1 y disco definitivo & Parcial \\
 Caché rápida, también offline & Squid transparente, Nginx, Kiwix (P9, P11); faltan P10, P12, P13 & Parcial \\
 DHCP/DNS robusto y portal cautivo & Relay, \texttt{hub.lan}, Hotspot por VLAN (P3--P8) & Cumple \\
 \bottomrule
@@ -264,22 +490,22 @@ DHCP/DNS robusto y portal cautivo & Relay, \texttt{hub.lan}, Hotspot por VLAN (P
 \begin{enumerate}
 \item Ejecutar P1, P10, P12 y P13 y tomar capturas de todas las pruebas.
 \item Subir y probar el portal rediseñado y las páginas del Hotspot.
-\item Respaldar \texttt{/etc} del hub y devolver los equipos prestados.
+\item Respaldar \texttt{/etc} del hub y devolver los equipos prestados como estaban.
 \end{enumerate}
 
 \subsection{Fase 3}
 \begin{itemize}
 \item Disco SSD de 2--4~TB definitivo, caché de Squid de 50--100~GB, cuotas y purga automática.
-\item Streaming con Jellyfin~\cite{jellyfin} y dashboard por categorías con búsqueda local.
+\item Streaming con Jellyfin~\cite{jellyfin} y dashboard por categorías con búsqueda local, sobre el portal ya rediseñado.
 \item Pila del RTC para tener hora sin Internet tras cada apagado.
-\item Conmutación online/offline, sincronización y avisos por MQTT.
+\item Conmutación online/offline, sincronización una vez por conexión y avisos por MQTT.
 \item Consumo real, autonomía y apagado ordenado al 15~\% de batería.
-\item Certificado real con certbot y CA de pruebas restringida a \texttt{hub.lan}.
+\item Certificado real con certbot y CA de pruebas restringida a \texttt{hub.lan}: la actual podría firmar certificados para cualquier dominio si se filtrara su llave.
 \end{itemize}
 
 %=====================================================================
 \section{Conclusiones}
-El diseño consolidado funciona en hardware físico. La segmentación por VLAN, el portal cautivo por grupo, el firewall y las colas cumplen el requisito de redes independientes por grupo de interés. El DNS, el DHCP, la hora, el portal y la Wikipedia siguen funcionando sin Internet, lo que valida el enfoque \textit{offline-first}. Llevar los equipos a lo físico uno a la vez permitió aislar cada falla. Las pruebas pendientes de la Fase~2 no requieren cambios de diseño, solo una sesión de laboratorio.
+El diseño consolidado funciona en hardware físico. La segmentación por VLAN, el portal cautivo por grupo, el firewall y las colas cumplen el requisito de redes independientes por grupo de interés. El DNS, el DHCP, la hora, el portal y la Wikipedia siguen funcionando sin Internet, lo que valida el enfoque \textit{offline-first}. Validar primero en GNS3 y llevar los equipos a lo físico uno a la vez permitió aislar cada falla, y guardar un \texttt{/export} después de cada cambio permitió recuperar el estado en minutos. Las pruebas pendientes de la Fase~2 no requieren cambios de diseño, solo una sesión de laboratorio.
 
 \begin{thebibliography}{00}
 \bibitem{ieee8021q} IEEE, ``IEEE Standard for Local and Metropolitan Area Networks -- Bridges and Bridged Networks,'' IEEE Std 802.1Q-2018.
