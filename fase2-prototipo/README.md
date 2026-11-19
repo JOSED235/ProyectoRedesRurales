@@ -30,9 +30,10 @@ MikroTik **CCR2004-16G-2S+** (RouterOS 7.13.5) del laboratorio, compartido con o
 
 ## 2.3 — Servicios, access point y portal cautivo
 
-Documento: [`Fase2.3_Servicios_AP_Portal_Cautivo.pdf`](Fase2.3_Servicios_AP_Portal_Cautivo.pdf) · Para retomar en el lab: **[`ARRANQUE-LAB.md`](ARRANQUE-LAB.md)**
+Documento: [`Fase2.3_Servicios_AP_Portal_Cautivo.pdf`](Fase2.3_Servicios_AP_Portal_Cautivo.pdf) · Para retomar en el lab: **[`ARRANQUE-LAB.md`](ARRANQUE-LAB.md)** · Sesión del 18/11: **[`SESION-2026-11-18.md`](SESION-2026-11-18.md)**
 
 Respaldo del 17/11/2026: [`configs/mikrotik/hub-ccr2004-2026-11-17.rsc`](../configs/mikrotik/hub-ccr2004-2026-11-17.rsc) y [`configs/servidor/etc/`](../configs/servidor/etc/).
+Estado del 18/11/2026 (pasos 7 y 8 aplicados): [`configs/mikrotik/hub-ccr2004-2026-11-18.rsc`](../configs/mikrotik/hub-ccr2004-2026-11-18.rsc) y [`configs/mikrotik/hotspot/login.html`](../configs/mikrotik/hotspot/login.html). Bridge, VLAN 10/20/30, puertos, IPs, relay, NAT y PBR quedaron iguales al 17/11; solo se agregó lo de los pasos 7 y 8.
 
 **Decisión:** en el prototipo los servicios del hub se instalan con `apt` y corren con systemd, sin Docker. Así gastan menos RAM, arrancan sin depender de otro servicio y `RequiresMountsFor=/srv/cdn` los protege si falta el disco. Docker queda para la Fase 3 (Jellyfin y Mosquitto), si hace falta.
 
@@ -44,8 +45,8 @@ Respaldo del 17/11/2026: [`configs/mikrotik/hub-ccr2004-2026-11-17.rsc`](../conf
 | 4 | CA de pruebas, certificado `*.hub.lan`, Nginx HTTPS, Kiwix | Raspberry | Hecho |
 | 5 | Squid transparente (`3129 intercept`) + PBR `to-proxy` + netwatch | Raspberry, MikroTik | Hecho |
 | 6 | TP-Link TL-WA801ND: Hub-Salud (V20, WPA2) y Hub-Publica (V30, abierta) | TP-Link | Hecho |
-| 7 | Certificado en el MikroTik y Hotspot | MikroTik | Pendiente |
-| 8 | Firewall entre VLAN y colas | MikroTik | Pendiente |
+| 7 | Certificado en el MikroTik, Hotspot y enlace en `login.html` | MikroTik | Hecho (18/11) |
+| 8 | Firewall entre VLAN y colas | MikroTik | Hecho y comprobado (18/11) |
 | 9 | Pruebas P1–P15 con capturas | Todos | Pendiente |
 
 El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El UniFi UAP-AC-M sigue siendo el del diseño final; la configuración SSID↔VLAN es la misma.
@@ -55,20 +56,20 @@ El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El Un
 | ID | Criterio | Qué se prueba | Resultado esperado | Estado |
 |---|---|---|---|---|
 | P1 | Instalación y SO | Todo vuelve tras `sudo reboot` | 5× `active` y `/srv/cdn` con `noatime` | Pendiente |
-| P2 | Instalación y SO | Seguridad básica | `Permission denied (publickey)`; ufw activo | Pendiente |
-| P3 | Conectividad | DHCP por relay, pública | IP `.10–.126`, gw `10.20.0.1`, DNS `10.20.0.162` | Pendiente |
-| P4 | Conectividad | DHCP por relay, salud | IP `.135–.158`, gw `10.20.0.129` | Pendiente |
-| P5 | Conectividad | DNS local y caché | `portal.hub.lan` → `10.20.0.162`; 2.ª consulta ≈ 0 ms | Pendiente |
-| P6 | Conectividad | Hora común | MikroTik `synchronized` con `10.20.0.162` | Pendiente |
-| P7 | Conectividad | Portal cautivo pública | Abre solo; con la prueba se navega | Pendiente |
-| P8 | Conectividad | Portal con usuario, salud | Navega; `/ip hotspot active print` | Pendiente |
-| P9 | Caché estática | HTTPS obligatorio | `http://portal.hub.lan` termina en HTTPS con candado | Pendiente |
+| P2 | Instalación y SO | Seguridad básica | `Permission denied (publickey)`; ufw activo | OK 18/11 (se volvió a poner `PasswordAuthentication no`) |
+| P3 | Conectividad | DHCP por relay, pública | IP `.10–.126`, gw `10.20.0.1`, DNS `10.20.0.162` | OK 18/11 (`10.20.0.57`) |
+| P4 | Conectividad | DHCP por relay, salud | IP `.135–.158`, gw `10.20.0.129` | OK 18/11 (`10.20.0.157`) |
+| P5 | Conectividad | DNS local y caché | `portal.hub.lan` → `10.20.0.162`; 2.ª consulta ≈ 0 ms | OK 18/11 (12 ms → 0 ms) |
+| P6 | Conectividad | Hora común | MikroTik `synchronized` con `10.20.0.162` | OK 18/11 |
+| P7 | Conectividad | Portal cautivo pública | Abre solo; con la prueba se navega | OK 18/11 |
+| P8 | Conectividad | Portal con usuario, salud | Navega; `/ip hotspot active print` | OK 18/11 (falta captura de `active print`) |
+| P9 | Caché estática | HTTPS obligatorio | `http://portal.hub.lan` termina en HTTPS con candado | OK 18/11 (301 → HTTPS, verificado con la CA) |
 | P10 | Caché estática | Contenido sin iniciar sesión | Portal, PDF y Wikipedia abren | Pendiente |
-| P11 | Caché estática | Sin Internet | P5, P9 y P10 siguen funcionando | Pendiente |
+| P11 | Caché estática | Sin Internet | P5, P9 y P10 siguen funcionando | OK 18/11 (WiFi del portátil apagado) |
 | P12 | Caché estática | Caché de Squid | `TCP_MISS` y luego `TCP_HIT`/`TCP_MEM_HIT` | Pendiente |
 | P13 | Caché estática | Squid caído no corta | Sigue navegando; `pbr-squid` desactivada | Pendiente |
-| P14 | Conectividad | Aislamiento entre VLAN | Desde Hub-Publica, `http://10.20.0.163` no abre | Pendiente |
-| P15 | Conectividad | Límite de ancho de banda | ≈ 2 Mbps de bajada por usuario | Pendiente |
+| P14 | Conectividad | Aislamiento entre VLAN | Desde Hub-Publica, `http://10.20.0.163` no abre | OK 18/11 |
+| P15 | Conectividad | Límite de ancho de banda | ≈ 2 Mbps de bajada por usuario | OK 18/11 |
 
 ### Bitácora (causa → solución)
 
@@ -78,6 +79,12 @@ El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El Un
 | `/etc/fstab` con dos montajes en `/srv/cdn` | Se agregó la línea del disco USB sin quitar la del archivo de 10 GB; los dos se llaman `HUBDATA` | Dejar una sola línea (`ARRANQUE-LAB.md`, B.4) |
 | El portátil no ve la web del AP | El AP solo responde a su red | NAT de laboratorio `lab: portatil a la web del AP`; se borra al cerrar |
 | SSH se cuelga tras `ufw enable` | Faltaba la regla del portátil | `sudo ufw allow from 10.42.0.0/24` desde la consola local |
+| 18/11: nginx, kiwix y squid caídos al arrancar | `/srv/cdn` sin montar: `fstab` con dos líneas `HUBDATA` (disco USB y `hubdata.img`). El portal y Kiwix estaban solo en `hubdata.img` | Se copiaron `www/` y `kiwix/` al disco USB (`cp -a`), se comentó la línea de `hubdata.img` (queda de respaldo) y se montó `/dev/sdb1` en `/srv/cdn` |
+| 18/11: Raspberry con fecha del 30/10 y MikroTik `waiting` en NTP | La Pi no tiene RTC con pila y arrancó sin Internet; chrony no resolvió los pools | `sudo systemctl restart chrony` con Internet. El MikroTik pasó a `synchronized` con 10.20.0.162. Sin la hora correcta, el certificado (emitido el 13/11) aparece como “aún no válido” |
+| 18/11: comandos de varias líneas por `ssh` fallan con `bad command name add` | Por SSH no interactivo cada línea se ejecuta sola y pierde el menú (`/ip firewall filter`) | Escribir la ruta completa en cada línea (`/ip firewall filter add ...`). Sin modo seguro, se usó un `/system scheduler` que borraba las reglas `hub:` a los 5 min si se perdía el acceso |
+| 18/11: el portátil pierde enlace en `ether9` | Cable o conector flojo | Cambiar el cable; al volver, repetir `ip route replace` |
+| 18/11: la Pi aceptaba contraseña por SSH (P2 fallaba) | `10-hub.conf` quedó con `PasswordAuthentication yes` tras usar el plan B de A.1 | `sed` a `no`, `sshd -t` y `systemctl restart ssh`. Después del plan B, cerrar siempre |
+| 18/11: SSH a la Pi sin llave del portátil nuevo | `ssh-copy-id` | La Pi aceptó contraseña (`publickey,password`); llave agregada con `ssh-copy-id`. En el MikroTik: `/user ssh-keys import` |
 
 ### Siguiente (Fase 3)
 

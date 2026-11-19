@@ -4,7 +4,9 @@ Lista corta para volver a dejar todo como quedó el **17/11/2026** y terminar lo
 
 **Qué ya funciona (respaldo 17/11):** Raspberry con ufw, SSH solo con llave, disco en `/srv/cdn`, dnsmasq (DNS + DHCP de las 3 VLAN), chrony, Nginx con HTTPS, Kiwix, Squid. MikroTik con relay DHCP, NTP desde la Raspberry, desvío de HTTP a Squid (PBR + netwatch). TP-Link con Hub-Salud (VLAN 20) y Hub-Publica (VLAN 30), DHCP apagado, IP `10.20.0.163`.
 
-**Qué falta:** certificado en el MikroTik, Hotspot, firewall entre VLAN, colas, enlace en `login.html`, pruebas P1–P15 con capturas.
+**Qué falta:** ~~certificado en el MikroTik, Hotspot, firewall entre VLAN, colas, enlace en `login.html`~~ (hecho el 18/11). Quedan las pruebas P1, P10, P12 y P13 y las capturas. Ver **[`SESION-2026-11-18.md`](SESION-2026-11-18.md)**.
+
+> **Desde el 18/11** el respaldo vigente es `hub-ccr2004-2026-11-18.backup` (cifrado con la contraseña de `admin`; está en `~/hub-rural/mikrotik/` del portátil de Jose David). Úsalo en B.2 en lugar del del 17/11 y salta la sección C.
 
 > Las contraseñas **no** están en este repositorio (es público). Pídelas a Carol o al compañero por un canal privado.
 
@@ -138,6 +140,18 @@ sudo systemctl daemon-reload && sudo umount -R /srv/cdn; sudo mount -a && findmn
 ```
 
 Si Squid, Nginx o Kiwix no arrancan, casi siempre es que `/srv/cdn` no está montado (`RequiresMountsFor`).
+
+> **Actualización 18/11:** ya se hizo. `www/` y `kiwix/` se copiaron al disco USB y la línea de `hubdata.img` quedó comentada en `/etc/fstab`. Desde ahora `/srv/cdn` es `/dev/sdb1` (disco USB de 465 GB, `HUBDATA`). Si el disco USB no está conectado, quita el `#` de la línea de `hubdata.img` y comenta la del disco.
+
+### B.4b Hora
+
+La Pi no tiene RTC con pila: si arranca sin Internet queda con una fecha vieja y el certificado del portal sale como no válido. Cuando el MikroTik ya tenga Internet (`/ping 8.8.8.8`):
+
+```bash
+sudo systemctl restart chrony && sleep 15 && chronyc sources && date   # en la Raspberry
+```
+
+En el MikroTik, `/system ntp client print` debe decir `synchronized` con `10.20.0.162`.
 
 ### B.5 TP-Link: guardar lo del otro grupo y cargar el hub
 

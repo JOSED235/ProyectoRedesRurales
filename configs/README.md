@@ -8,6 +8,8 @@ Archivos que se copian tal cual a los equipos. Se probaron primero en el laborat
 |---|---|---|
 | [`mikrotik/hub-base.rsc`](mikrotik/hub-base.rsc) | Base del laboratorio GNS3 (CHR 7.25, puertos `ether1`–`ether5`) | `/import hub-base.rsc` en un CHR |
 | [`mikrotik/hub-ccr2004-2026-11-17.rsc`](mikrotik/hub-ccr2004-2026-11-17.rsc) | `/export` real del CCR2004 del laboratorio (Fase 2.3 hasta el paso 6) | Referencia. En el lab se restaura con el `.backup`, que no se versiona |
+| [`mikrotik/hub-ccr2004-2026-11-18.rsc`](mikrotik/hub-ccr2004-2026-11-18.rsc) | `/export` real del CCR2004 con los pasos 7 y 8 (Hotspot, firewall, colas) | Referencia. Sin contraseñas (RouterOS 7 las oculta) |
+| [`mikrotik/hotspot/login.html`](mikrotik/hotspot/login.html) | Página de login del Hotspot con el enlace a `https://portal.hub.lan` | `scp -O login.html admin@10.20.0.161:hotspot/login.html` |
 | [`mikrotik/fase23-pendiente.rsc`](mikrotik/fase23-pendiente.rsc) | Certificado, Hotspot, firewall y colas (pasos 7 y 8) | Pegar por bloques sobre el respaldo del 17/11 |
 
 ## Servidor hub (Raspberry Pi 5, Ubuntu Server 24.04)
