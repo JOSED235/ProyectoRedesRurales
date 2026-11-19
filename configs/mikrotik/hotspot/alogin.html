@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- hotspot/alogin.html — se muestra justo después de iniciar sesión.
+     Lleva a la página que la persona quería abrir ($(link-redirect)) a los 4 s.
+     Sin ventana emergente: en celulares se bloquea. Usa hub.css. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="-1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="refresh" content="4; url=$(link-redirect)">
+<title>Hub Rural · Conectado</title>
+<link rel="stylesheet" href="hub.css">
+</head>
+$(if trial == 'yes')<body>$(else)<body class="salud">$(endif)
+
+<main class="card">
+  <div class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+  <h1>Listo, ya tienes Internet</h1>
+  <p class="sub">$(if login-by == 'trial')Tu prueba gratis empezó. $(endif)En unos segundos te llevamos a la página que querías abrir.</p>
+
+  <a class="btn" href="$(link-redirect)">Continuar ahora</a>
+  <a class="btn sec" href="$(link-status)">Ver mi tiempo restante</a>
+</main>
+
+<p class="pie">Para revisar tu tiempo después, abre $(if trial == 'yes')wifi-publica.hub.lan$(else)wifi-salud.hub.lan$(endif)/status</p>
+</body>
+</html>

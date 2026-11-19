@@ -34,6 +34,7 @@ Documento: [`Fase2.3_Servicios_AP_Portal_Cautivo.pdf`](Fase2.3_Servicios_AP_Port
 
 Respaldo del 17/11/2026: [`configs/mikrotik/hub-ccr2004-2026-11-17.rsc`](../configs/mikrotik/hub-ccr2004-2026-11-17.rsc) y [`configs/servidor/etc/`](../configs/servidor/etc/).
 Estado del 18/11/2026 (pasos 7 y 8 aplicados): [`configs/mikrotik/hub-ccr2004-2026-11-18.rsc`](../configs/mikrotik/hub-ccr2004-2026-11-18.rsc) y [`configs/mikrotik/hotspot/login.html`](../configs/mikrotik/hotspot/login.html). Bridge, VLAN 10/20/30, puertos, IPs, relay, NAT y PBR quedaron iguales al 17/11; solo se agregó lo de los pasos 7 y 8.
+Rediseño del 19/11 (sin laboratorio): portal [`configs/servidor/www/index.html`](../configs/servidor/www/index.html) con categorías Educación/Salud/Ocio y búsqueda local, guía [`certificado.html`](../configs/servidor/www/certificado.html) y todas las páginas del Hotspot en español en [`configs/mikrotik/hotspot/`](../configs/mikrotik/hotspot/). Se suben con [`ARRANQUE-LAB.md`](ARRANQUE-LAB.md) C.3.
 
 **Decisión:** en el prototipo los servicios del hub se instalan con `apt` y corren con systemd, sin Docker. Así gastan menos RAM, arrancan sin depender de otro servicio y `RequiresMountsFor=/srv/cdn` los protege si falta el disco. Docker queda para la Fase 3 (Jellyfin y Mosquitto), si hace falta.
 
@@ -47,7 +48,8 @@ Estado del 18/11/2026 (pasos 7 y 8 aplicados): [`configs/mikrotik/hub-ccr2004-20
 | 6 | TP-Link TL-WA801ND: Hub-Salud (V20, WPA2) y Hub-Publica (V30, abierta) | TP-Link | Hecho |
 | 7 | Certificado en el MikroTik, Hotspot y enlace en `login.html` | MikroTik | Hecho (18/11) |
 | 8 | Firewall entre VLAN y colas | MikroTik | Hecho y comprobado (18/11) |
-| 9 | Pruebas P1–P15 con capturas | Todos | Pendiente |
+| 9 | Pruebas P1–P15 con capturas | Todos | En curso (11/15 el 18/11) |
+| 10 | Portal rediseñado, guía del certificado y páginas del Hotspot; `host-record` de `wifi-publica`/`wifi-salud`; `certificado.html` por HTTP en Nginx | Raspberry, MikroTik | En el repo (19/11); falta subir y probar |
 
 El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El UniFi UAP-AC-M sigue siendo el del diseño final; la configuración SSID↔VLAN es la misma.
 
@@ -91,6 +93,7 @@ El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El Un
 - Disco SSD de 2–4 TB definitivo y Squid con 50–100 GB de caché.
 - RTC con pila (`dtparam=rtc_bbat_vchg=3000000`) para tener hora sin Internet tras el apagado al 15 %.
 - Certificado real con certbot (DNS-01) cuando el profesor confirme el dominio.
+- Regenerar la CA de pruebas con `nameConstraints=critical,permitted;DNS:hub.lan`: la actual (`CA:TRUE` sin restricciones) podría firmar certificados para cualquier dominio si se filtra `ca.key`.
 
 ## Rúbrica Fase 2 (objetivo *Accomplished*)
 

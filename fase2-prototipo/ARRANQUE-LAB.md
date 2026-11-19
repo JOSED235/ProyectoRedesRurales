@@ -195,18 +195,32 @@ rm hub.key
 
 Pega [`configs/mikrotik/fase23-pendiente.rsc`](../configs/mikrotik/fase23-pendiente.rsc) **por bloques**, en orden. Antes del bloque 8.1 presiona `Ctrl+X` (modo seguro).
 
-### C.3 Enlace al contenido en la página del portal
+### C.3 Páginas del portal y del Hotspot (rediseño del 19/11)
+
+Desde la raíz del repo, en el portátil:
 
 ```bash
-mkdir -p ~/hub-rural/mikrotik/hotspot && cd ~/hub-rural/mikrotik/hotspot
-scp admin@10.20.0.161:hotspot/login.html . && cp login.html login.html.original
-nano login.html      # justo después de <body ...> pega la línea de abajo
-scp login.html admin@10.20.0.161:hotspot/login.html
+# MikroTik: páginas del Hotspot (respaldo antes de reemplazar)
+scp -O admin@10.20.0.161:hotspot/login.html ~/hub-rural/mikrotik/login.html.original
+cd configs/mikrotik/hotspot
+scp -O hub.css login.html alogin.html status.html logout.html error.html errors.txt admin@10.20.0.161:hotspot/
+cd -
+
+# Raspberry: portal, guía del certificado, Nginx y DNS
+scp configs/servidor/www/index.html configs/servidor/www/certificado.html carol@10.20.0.162:/srv/cdn/www/
+scp configs/servidor/etc/nginx/sites-available/hub configs/servidor/etc/dnsmasq.d/hub.conf carol@10.20.0.162:
+ssh -t carol@10.20.0.162 'sudo install -m 644 hub /etc/nginx/sites-available/hub && sudo install -m 644 hub.conf /etc/dnsmasq.d/hub.conf   && sudo mkdir -p /srv/cdn/www/pdf/{educacion,salud,ocio} && sudo nginx -t && sudo systemctl reload nginx && sudo systemctl restart dnsmasq && rm hub hub.conf'
 ```
 
-```html
-<p style="text-align:center;font-size:18px"><a href="https://portal.hub.lan">Ver contenido sin conexión</a></p>
-```
+Comprobar con el celular:
+
+1. Hub-Publica, sin iniciar sesión: la página de acceso en español, con "Navegar en Internet gratis" y "Ver contenido sin conexión".
+2. `https://portal.hub.lan`: el buscador filtra, y una palabra que no está (p. ej. «volcán») lleva a la búsqueda de Kiwix. **Si Kiwix responde error**, la búsqueda multi-libro no está disponible en esta versión: revisar `kiwix-serve --version` y usar `/search?books.name=<libro>&pattern=`.
+3. Los PDF de `/srv/cdn/www/pdf/<categoría>/` aparecen en su sección.
+4. `http://portal.hub.lan/certificado.html` abre por HTTP (sin pasar a HTTPS).
+5. Iniciar la prueba gratis: aparece "Listo, ya tienes Internet" y luego la página pedida. `https://wifi-publica.hub.lan/status` muestra el tiempo restante.
+6. Hub-Salud con una clave mal escrita: "usuario o clave incorrectos". Luego cerrar sesión desde `status`: aparece "Cerraste sesión".
+7. Abrir el tutorial de Python desde el portal. Si da 404, revisar la ruta real con `ls /srv/cdn/www/sitios/` y corregir el enlace en `index.html`.
 
 ### C.4 Pruebas P1–P15
 

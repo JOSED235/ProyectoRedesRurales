@@ -4,6 +4,8 @@ server {
     listen 80 default_server;
     server_name _;
     location = /ca-hub.crt { root /srv/cdn/www; }
+    # Guía para instalar la CA: por HTTP porque sin la CA el HTTPS muestra advertencia
+    location = /certificado.html { root /srv/cdn/www; }
     location / { return 301 https://portal.hub.lan$request_uri; }
 }
 

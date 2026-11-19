@@ -1,0 +1,92 @@
+<!doctype html>
+<!-- /srv/cdn/www/certificado.html — cómo instalar la CA de pruebas del hub en el celular.
+     Nginx la sirve también por HTTP (puerto 80), porque sin la CA instalada el HTTPS muestra advertencia.
+     Autocontenida, sin recursos externos. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Hub Rural · Certificado</title>
+<style>
+  :root {
+    --bg: #f5f0e6; --surface: #fffdf8; --ink: #1f2a24; --muted: #5d6a62; --line: #e2dacb;
+    --c: #2f5d46; --cs: #e3eee6; --warn: #8a5a14; --warn-soft: #f6ead3; --focus: #c7832f;
+    --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131916; --surface: #1b231f; --ink: #ebe5d9; --muted: #a2ada6; --line: #2b3530;
+      --c: #84bc9e; --cs: #1f3128; --warn: #e6b866; --warn-soft: #33281a; --focus: #e0a556; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--sans); }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 40px; }
+  .volver { font-size: .9rem; color: var(--muted); text-decoration: none; }
+  h1 { font: 600 clamp(1.6rem, 5vw, 2.2rem)/1.15 var(--serif); margin: 18px 0 8px; }
+  .lead { color: var(--muted); margin: 0 0 20px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 12px;
+    font-weight: 600; text-decoration: none; background: var(--c); color: var(--surface); }
+  .btn svg { width: 20px; height: 20px; }
+  .aviso { background: var(--warn-soft); color: var(--warn); border-radius: 12px; padding: 12px 14px; font-size: .9rem; margin: 16px 0 24px; }
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 12px; }
+  summary { cursor: pointer; padding: 16px; font: 600 1.1rem var(--serif); list-style: none; display: flex; justify-content: space-between; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--c); font-family: var(--sans); }
+  details[open] summary::after { content: "−"; }
+  ol { margin: 0; padding: 0 16px 16px 40px; }
+  li { margin-bottom: 8px; }
+  li b { font-weight: 600; }
+  .nota { color: var(--muted); font-size: .88rem; padding: 0 16px 16px; margin: 0; }
+  h2 { font: 600 1.2rem var(--serif); margin: 28px 0 8px; }
+  p { margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="volver" href="https://portal.hub.lan">← Volver al portal</a>
+  <h1>Instala el certificado del hub</h1>
+  <p class="lead">El hub usa conexiones seguras (HTTPS). Para que el celular confíe en él y no muestre advertencias, instala este certificado una sola vez.</p>
+
+  <a class="btn" href="/ca-hub.crt" download>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+    Descargar certificado (ca-hub.crt)
+  </a>
+
+  <p class="aviso">Certificado de pruebas del proyecto. Instálalo solo en esta red y si te lo indica el puesto. Puedes quitarlo cuando quieras en Ajustes, en <b>Credenciales de confianza</b> (Android) o <b>Perfiles</b> (iPhone).</p>
+
+  <details open>
+    <summary>Android</summary>
+    <ol>
+      <li>Toca <b>Descargar certificado</b>. Si pregunta, guárdalo.</li>
+      <li>Abre <b>Ajustes → Seguridad y privacidad → Más ajustes de seguridad</b> (en Samsung: <b>Otros ajustes de seguridad</b>).</li>
+      <li>Entra a <b>Instalar desde almacenamiento</b> → <b>Certificado de CA</b> → <b>Instalar de todas formas</b>.</li>
+      <li>Elige <b>ca-hub.crt</b> en Descargas y confirma con tu PIN o huella.</li>
+    </ol>
+    <p class="nota">Los nombres cambian un poco según la marca. Si no lo encuentras, busca «certificado» en la lupa de Ajustes.</p>
+  </details>
+
+  <details>
+    <summary>iPhone</summary>
+    <ol>
+      <li>Abre esta página en <b>Safari</b> y toca <b>Descargar certificado</b> → <b>Permitir</b>.</li>
+      <li>Ve a <b>Ajustes → Perfil descargado → Instalar</b> y escribe tu código.</li>
+      <li>Luego <b>Ajustes → General → Información → Ajustes de confianza de certificados</b> y activa <b>CA Hub Rural (solo pruebas)</b>.</li>
+    </ol>
+  </details>
+
+  <details>
+    <summary>Computador</summary>
+    <ol>
+      <li><b>Windows:</b> abre el archivo → <b>Instalar certificado</b> → <b>Equipo local</b> → <b>Entidades de certificación raíz de confianza</b>.</li>
+      <li><b>Firefox:</b> Ajustes → Privacidad → <b>Ver certificados</b> → Autoridades → <b>Importar</b>.</li>
+    </ol>
+  </details>
+
+  <h2>¿Funcionó?</h2>
+  <p>Abre <a href="https://portal.hub.lan">https://portal.hub.lan</a>. Debe abrir sin advertencia y con el candado cerrado.</p>
+</main>
+</body>
+</html>

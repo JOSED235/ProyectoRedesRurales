@@ -41,7 +41,7 @@ Al cerrar la Fase 1 cada integrante tenía su propia versión del plan. Las dos 
 | Equipo | Rol |
 |---|---|
 | **Starlink Mini** (modo bypass) | Salida a Internet. Entrega la IP de `ether1` por DHCP y aplica CGNAT. |
-| **MikroTik** (RouterOS 7) | Router L3 de todas las VLAN (router-on-a-stick, bridge con `vlan-filtering`), NAT, relay DHCP y desvío de HTTP a Squid. Pendiente: firewall entre VLAN, Hotspot (portal cautivo) y colas. En el laboratorio es un CCR2004-16G-2S+ compartido (puertos en [`fase2-prototipo/README.md`](fase2-prototipo/README.md#22--mikrotik-físico)). |
+| **MikroTik** (RouterOS 7) | Router L3 de todas las VLAN (router-on-a-stick, bridge con `vlan-filtering`), NAT, relay DHCP, desvío de HTTP a Squid, Hotspot (portal cautivo) con HTTPS, firewall entre VLAN y colas. En el laboratorio es un CCR2004-16G-2S+ compartido (puertos en [`fase2-prototipo/README.md`](fase2-prototipo/README.md#22--mikrotik-físico)). |
 | **UniFi UAP-AC-M** (PoE) | Access point L2. Asocia cada SSID a una VLAN. Su gestión va sin etiqueta en la VLAN 10. En el laboratorio se usa un TP-Link TL-WA801ND (`10.20.0.163`) con la misma configuración. |
 | **Raspberry Pi 5** — servidor `hub` | Ubuntu Server 24.04 ARM64 con IP fija en la VLAN 10. Servicios con `apt` + systemd (sin Docker en la Fase 2): DNS/DHCP (`dnsmasq`), NTP (`chrony`), Nginx (HTTPS), Kiwix, Squid y ufw. Fase 3: Jellyfin y Mosquitto (Docker si hace falta). Disco NVMe + 2–4 TB por USB 3. |
 | Portátil de administración | Conectado por cable a `ether4` (VLAN 10). |
@@ -84,9 +84,12 @@ NAT: `srcnat 10.20.0.0/24 → ether1 masquerade`. Hay doble traducción (MikroTi
 
 - [`configs/mikrotik/hub-base.rsc`](configs/mikrotik/hub-base.rsc): configuración base del MikroTik (VLAN, gateways, DNS, NAT).
 - [`configs/mikrotik/hub-ccr2004-2026-11-17.rsc`](configs/mikrotik/hub-ccr2004-2026-11-17.rsc): `/export` real del MikroTik físico (17/11/2026).
-- [`configs/mikrotik/fase23-pendiente.rsc`](configs/mikrotik/fase23-pendiente.rsc): Hotspot, firewall y colas por aplicar.
+- [`configs/mikrotik/hub-ccr2004-2026-11-18.rsc`](configs/mikrotik/hub-ccr2004-2026-11-18.rsc): `/export` con Hotspot, firewall y colas (18/11/2026).
+- [`configs/mikrotik/fase23-pendiente.rsc`](configs/mikrotik/fase23-pendiente.rsc): script con el que se aplicaron el Hotspot, el firewall y las colas.
+- [`configs/mikrotik/hotspot/`](configs/mikrotik/hotspot/): páginas del Hotspot en español (acceso, estado, cierre de sesión, errores).
 - [`configs/servidor/01-hub.yaml`](configs/servidor/01-hub.yaml): netplan del hub (RPi5).
 - [`configs/servidor/etc/`](configs/servidor/etc/): dnsmasq, chrony, SSH, Nginx, Squid y Kiwix del hub.
+- [`configs/servidor/www/`](configs/servidor/www/): portal `portal.hub.lan` (categorías y búsqueda local), guía del certificado y CA de pruebas.
 
 Para retomar en el laboratorio: [`fase2-prototipo/ARRANQUE-LAB.md`](fase2-prototipo/ARRANQUE-LAB.md).
 
@@ -120,12 +123,13 @@ ProyectoRedesRurales/
 ├── fase2-prototipo/                       # Fase 2 — Prototipo
 │   ├── README.md                          # 2.1, 2.2, 2.3, pruebas y bitácora
 │   ├── ARRANQUE-LAB.md                    # Lista para retomar en el laboratorio
+│   ├── SESION-2026-11-18.md               # Bitácora de la sesión del 18/11
 │   ├── Fase2.1_Implementacion_Fisica_RPi5.pdf
 │   └── Fase2.3_Servicios_AP_Portal_Cautivo.pdf
 ├── fase3-operacion/README.md              # Fase 3 — Alcance pendiente
 ├── configs/                               # Configuraciones de equipos (ver configs/README.md)
-│   ├── mikrotik/                          # hub-base (GNS3), export del CCR2004, pendiente 2.3
-│   └── servidor/                          # Netplan y /etc del hub RPi5
+│   ├── mikrotik/                          # hub-base (GNS3), exports del CCR2004, páginas del Hotspot
+│   └── servidor/                          # Netplan, /etc y portal web del hub RPi5
 ├── skills/skills.md                       # Catálogo de competencias del proyecto
 ├── .claude/skills/ingeniero-redes-rurales/SKILL.md   # Skill de Claude Code (ingeniero de redes)
 ├── GEMINI.md                              # Reglas del asistente (siempre en español)
@@ -149,8 +153,9 @@ ProyectoRedesRurales/
   - [x] 2.2 MikroTik físico (CCR2004 del laboratorio) con VLAN, NAT y respaldo.
   - [x] 2.3 Hub: ufw, SSH con llave, `/srv/cdn` (ext4 `noatime`), dnsmasq + relay, chrony, Nginx HTTPS, Kiwix, Squid transparente (respaldo 17/11/2026).
   - [x] 2.3 Access point TP-Link con Hub-Salud (V20) y Hub-Publica (V30).
-  - [ ] 2.3 Certificado en el MikroTik, Hotspot (portal cautivo), firewall entre VLAN y colas.
-  - [ ] 2.3 Pruebas P1–P15 con capturas.
+  - [x] 2.3 Certificado en el MikroTik, Hotspot (portal cautivo), firewall entre VLAN y colas (18/11/2026).
+  - [ ] 2.3 Pruebas P1–P15 con capturas (11 de 15 OK el 18/11; faltan P1, P10, P12 y P13).
+  - [ ] 2.3 Portal y páginas del Hotspot rediseñados (en el repo el 19/11; falta subirlos y probarlos en el lab).
   - [ ] Disco de 2–4 TB definitivo (hoy: disco USB prestado o archivo de 10 GB).
 - [ ] **Fase 3 — Sistema plenamente operacional** (Jellyfin, purga automática, dashboard con búsqueda, conmutación online/offline, energía).
 

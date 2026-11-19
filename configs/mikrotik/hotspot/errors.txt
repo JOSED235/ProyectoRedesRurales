@@ -1,0 +1,20 @@
+# hotspot/errors.txt — mensajes de error del Hotspot en español.
+# Reemplaza el errors.txt de la plantilla de MikroTik. Se conservan todas las claves.
+# Variables disponibles: $(error-orig) mensaje original, $(ip) IP del cliente, $(username) usuario.
+
+internal-error = error interno del hotspot ($(error-orig))
+config-error = error de configuración del hotspot ($(error-orig))
+not-logged-in = no has iniciado sesión (equipo $(ip))
+ippool-empty = no hay direcciones IP libres en este momento; intenta en unos minutos
+shutting-down = el servicio se está apagando; intenta en unos minutos
+user-session-limit = el usuario $(username) ya está conectado en el máximo de equipos permitidos
+license-session-limit = se alcanzó el límite de conexiones ($(error-orig))
+wrong-mac-username = usuario no válido ($(username))
+chap-missing = el navegador no envió la clave cifrada; vuelve a intentar
+invalid-username = usuario o clave incorrectos
+invalid-mac = el usuario $(username) no puede entrar desde este equipo
+uptime-limit = se acabó tu tiempo de Internet por hoy; el contenido del hub sigue disponible en portal.hub.lan
+traffic-limit = se acabaron los datos de $(username); el contenido del hub sigue disponible en portal.hub.lan
+radius-timeout = el servidor de autenticación no responde
+auth-in-progress = ya se está validando tu acceso; espera un momento
+radius-reply = $(error-orig)

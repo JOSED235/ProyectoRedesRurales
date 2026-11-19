@@ -1,81 +1,88 @@
 <!doctype html>
-<html lang="en">
-
+<!-- hotspot/login.html — página de acceso del Hotspot (hotspot-publica y hotspot-salud)
+     La comparten los dos servidores: con prueba gratis (trial) se muestra la vista de Hub-Publica;
+     sin prueba, el formulario de usuario y clave de Hub-Salud.
+     Usa hub.css (mismo directorio); no depende de css/ ni img/ de la plantilla de MikroTik.
+     Subir con: scp -O login.html hub.css admin@10.20.0.161:hotspot/ -->
+<html lang="es">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="pragma" content="no-cache" />
-    <meta http-equiv="expires" content="-1" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Internet hotspot - Log in</title>
-    <link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="-1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Hub Rural · Acceso</title>
+<link rel="stylesheet" href="hub.css">
 </head>
 
-<body>
+$(if trial == 'yes')<body>$(else)<body class="salud">$(endif)
 
-    <p style="text-align:center;font-size:18px"><a href="https://portal.hub.lan">Ver contenido sin conexión</a></p>
+$(if chap-id)
+<!-- CHAP: solo se usa si el perfil tiene login-by=http-chap (hoy es https) -->
+<form name="sendin" action="$(link-login-only)" method="post" style="display:none">
+  <input type="hidden" name="username">
+  <input type="hidden" name="password">
+  <input type="hidden" name="dst" value="$(link-orig)">
+</form>
+<script src="/md5.js"></script>
+<script>
+  function doLogin() {
+    document.sendin.username.value = document.login.username.value;
+    document.sendin.password.value = hexMD5('$(chap-id)' + document.login.password.value + '$(chap-challenge)');
+    document.sendin.submit();
+    return false;
+  }
+</script>
+$(endif)
 
-    <!-- two other colors
+<main class="card">
+  <div class="marca">
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 40 18 20l7 9 5-6 14 17z" fill="currentColor" fill-opacity=".14"/>
+      <path d="M30 15a6 6 0 0 1 6-6M25 15a11 11 0 0 1 11-11"/><circle cx="36" cy="15" r="2" fill="currentColor" stroke="none"/>
+    </svg>
+    <div><b>Hub Rural</b><small>WiFi de la comunidad</small></div>
+  </div>
 
-<body class="lite">
-<body class="dark">
+  $(if error)<p class="alert" role="alert">$(error)</p>$(endif)
 
--->
+  $(if trial == 'yes')
+  <span class="red">HUB-PUBLICA</span>
+  <h1>Bienvenido a la red de la comunidad</h1>
+  <p class="sub">Puedes usar el contenido del hub sin límite. Para Internet tienes una prueba gratis.</p>
 
-    $(if chap-id)
-    <form name="sendin" action="$(link-login-only)" method="post" style="display:none">
-        <input type="hidden" name="username" />
-        <input type="hidden" name="password" />
-        <input type="hidden" name="dst" value="$(link-orig)" />
-        <input type="hidden" name="popup" value="true" />
-    </form>
+  <a class="btn" href="$(link-login-only)?dst=$(link-orig-esc)&amp;username=T-$(mac-esc)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+    Navegar en Internet gratis
+  </a>
+  <a class="btn sec" href="https://portal.hub.lan">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></svg>
+    Ver contenido sin conexión
+  </a>
+  <ul class="datos">
+    <li>2 horas de Internet al día por equipo</li>
+    <li>Velocidad compartida, hasta 2 Mbps</li>
+    <li>Wikipedia, guías y documentos no gastan tu tiempo</li>
+  </ul>
 
-    <script src="/md5.js"></script>
-    <script>
-        function doLogin() {
-            document.sendin.username.value = document.login.username.value;
-            document.sendin.password.value = hexMD5('$(chap-id)' + document.login.password.value + '$(chap-challenge)');
-            document.sendin.submit();
-            return false;
-        }
+  $(else)
+  <span class="red">HUB-SALUD</span>
+  <h1>Acceso del personal de salud</h1>
+  <p class="sub">Entra con el usuario y la clave que te dio el puesto de salud.</p>
 
-    </script>
-    $(endif)
-    <div class="ie-fixMinHeight">
-        <div class="main">
-            <div class="wrap animated fadeIn">
-                <form name="login" action="$(link-login-only)" method="post" $(if chap-id) onSubmit="return doLogin()" $(endif)>
-                    <input type="hidden" name="dst" value="$(link-orig)" />
-                    <input type="hidden" name="popup" value="true" />
-                    <svg class="logo" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 174 42">
-                        <path fill="#fff" d="M7.32 13.66L0 41.74 3.12 41.74 9.49 15.94 9.58 15.94 15.01 41.74 18.22 41.74 36.86 16.34 36.95 16.34 30.02 41.74 33.18 41.74 40.4 13.66 35.73 13.66 17.23 38.87 11.99 13.66 7.32 13.66zM43.43 21.45L38.19 41.74 41.16 41.74 46.4 21.45 43.43 21.45zM50.68 21.45L45.5 41.74 48.47 41.74 50.36 34.39 55.55 30.77 62.02 41.74 65.27 41.74 57.91 29.28 69.43 21.45 65.46 21.45 51.21 31.36 51.12 31.28 53.66 21.45 50.68 21.45z" />
-                        <path d="M71.18 21.45L65.94 41.74h3l2.74-10.62c1-3.81 3.82-7.39 9.16-7.47.56 0 1.13 0 1.7 0l.66-2.48c-.52 0-1.09 0-1.61 0-4.34 0-6.94 2-8.82 5h-.1l1.23-4.68zM103.8 28.8c0-5-4-7.94-9.63-7.94-8.69 0-13.59 6.37-13.59 13 0 5.07 3.44 8.45 9.72 8.45 9 0 13.5-6.68 13.5-13.53m-3 .52c0 4.72-3.44 10.93-9.95 10.93-5 0-7.32-2.68-7.32-6.61 0-4.76 3.59-10.7 10.1-10.7 4.77 0 7.17 2.6 7.17 6.38M132.33 21.43L134.26 13.66 105.19 13.66 103.27 21.45 112.59 21.45 112.59 21.45 122.99 21.45 122.99 21.45 132.33 21.43zM111.67 25.17L107.55 41.74 117.93 41.74 122.06 25.17 122.06 25.16 111.67 25.16 111.67 25.17zM134 25.17l-4.11 16.57h9.35l4.1-16.57zm10.28-3.73l1.94-7.78h-9.34l-2 7.79zM150.09 13.66L143.11 41.74 152.45 41.74 153.91 35.92 156.04 34.34 159.34 41.74 169.49 41.74 163.26 29.55 174.26 21.33 163.07 21.33 156.18 27.3 156.09 27.3 159.44 13.66 150.09 13.66zM47.45 0c1.14 7.93 5.39 12.74 14.07 13.14A10.69 10.69 0 0 1 47.45 0" fill="#fff" fill-rule="evenodd" />
-                        <path d="M42.91,1.4c.1,0,.11,0,.12.11A16.55,16.55,0,0,0,48.26,13a16.6,16.6,0,0,0,12,4.66c-10,4-20.55-5.6-17.33-16.28" fill="#fff" fill-rule="evenodd" /></svg>
+  <form name="login" action="$(link-login-only)" method="post" $(if chap-id)onsubmit="return doLogin()"$(endif)>
+    <input type="hidden" name="dst" value="$(link-orig)">
+    <label for="u">Usuario</label>
+    <input id="u" name="username" type="text" value="$(username)" autocomplete="username" autocapitalize="none" required>
+    <label for="p">Clave</label>
+    <input id="p" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit">Entrar</button>
+  </form>
+  <div class="sep">o sin iniciar sesión</div>
+  <a class="btn sec" href="https://portal.hub.lan">Ver contenido sin conexión</a>
+  $(endif)
+</main>
 
-
-                    <p class="info $(if error)alert$(endif)">
-                        $(if error == "")Inicia sesión para navegar en Internet $(if trial == 'yes')<br />Acceso de prueba gratis (2 horas): <a href="$(link-login-only)?dst=$(link-orig-esc)&amp;username=T-$(mac-esc)">navegar en Internet</a>.$(endif)
-                        $(endif)
-
-                        $(if error)$(error)$(endif)
-                    </p>
-                    <label>
-                        <img class="ico" src="img/user.svg" alt="#" />
-                        <input name="username" type="text" value="$(username)" placeholder="Username" />
-                    </label>
-
-                    <label>
-                        <img class="ico" src="img/password.svg" alt="#" />
-                        <input name="password" type="password" placeholder="Password" />
-                    </label>
-
-                    <input type="submit" value="Connect" />
-
-                </form>
-                <p class="info bt">Powered by MikroTik RouterOS</p>
-
-            </div>
-        </div>
-    </div>
+<p class="pie">¿El celular mostró una advertencia de seguridad? <a href="http://portal.hub.lan/certificado.html">Instala el certificado del hub</a>.<br>Tu equipo: $(ip) · ¿Problemas? Pide ayuda en el puesto.</p>
 </body>
-
 </html>
