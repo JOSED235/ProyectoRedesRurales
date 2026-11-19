@@ -1,0 +1,334 @@
+<!doctype html>
+<!-- /srv/cdn/www/index.html — portal del hub (https://portal.hub.lan)
+     Autocontenido: sin fuentes ni scripts externos, funciona sin Internet.
+     Los documentos se leen del autoindex de Nginx: /pdf/educacion/, /pdf/salud/, /pdf/ocio/.
+     Los PDF sueltos en /pdf/ aparecen en Educación. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Hub Rural</title>
+<style>
+  :root {
+    --bg: #f5f0e6; --surface: #fffdf8; --ink: #1f2a24; --muted: #5d6a62; --line: #e2dacb;
+    --edu: #2f5d46; --edu-soft: #e3eee6;
+    --salud: #24647f; --salud-soft: #e0edf3;
+    --ocio: #a9502b; --ocio-soft: #f6e6dc;
+    --focus: #c7832f;
+    --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131916; --surface: #1b231f; --ink: #ebe5d9; --muted: #a2ada6; --line: #2b3530;
+      --edu: #84bc9e; --edu-soft: #1f3128;
+      --salud: #80b8d3; --salud-soft: #1a2c35;
+      --ocio: #e39068; --ocio-soft: #352219;
+      --focus: #e0a556;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--sans); }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+  /* Encabezado */
+  header { border-bottom: 1px solid var(--line); background:
+    radial-gradient(1200px 300px at 85% -40%, var(--edu-soft), transparent 70%); }
+  .top { display: flex; align-items: center; gap: 12px; padding: 20px 0 8px; }
+  .top svg { width: 44px; height: 44px; flex: none; color: var(--edu); }
+  .brand { font: 600 1.35rem/1.1 var(--serif); }
+  .brand small { display: block; font: 400 .85rem var(--sans); color: var(--muted); }
+  .estado { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: .8rem;
+    color: var(--edu); background: var(--edu-soft); padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+  .estado::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  h1 { font: 600 clamp(1.7rem, 4.5vw, 2.6rem)/1.15 var(--serif); margin: 28px 0 8px; max-width: 20ch; }
+  .lead { color: var(--muted); margin: 0 0 20px; max-width: 56ch; }
+
+  /* Búsqueda y filtros */
+  .buscar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .buscar label { position: relative; flex: 1; }
+  .buscar svg { position: absolute; left: 14px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); color: var(--muted); }
+  .buscar input { width: 100%; font: inherit; font-size: 1.05rem; padding: 14px 14px 14px 44px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .buscar button, .btn { font: inherit; font-weight: 600; border: 0; border-radius: 12px; padding: 0 18px;
+    background: var(--edu); color: var(--surface); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 20px; }
+  .filtros button { font: inherit; font-size: .9rem; padding: 6px 14px; border-radius: 99px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+  .filtros button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  /* Categorías */
+  main { padding: 8px 0 40px; }
+  section.cat { padding: 24px 0 8px; }
+  .cat-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+  .cat-head h2 { font: 600 1.4rem var(--serif); margin: 0; }
+  .cat-head span { color: var(--muted); font-size: .9rem; }
+  .cat[data-cat="educacion"] { --c: var(--edu); --cs: var(--edu-soft); }
+  .cat[data-cat="salud"] { --c: var(--salud); --cs: var(--salud-soft); }
+  .cat[data-cat="ocio"] { --c: var(--ocio); --cs: var(--ocio-soft); }
+  .cat-head h2::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+    background: var(--c); margin-right: 10px; vertical-align: middle; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .card { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 14px; text-decoration: none;
+    background: var(--surface); border: 1px solid var(--line); transition: border-color .15s, transform .15s; }
+  a.card:hover { border-color: var(--c); transform: translateY(-2px); }
+  .card .ico { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--cs); color: var(--c); }
+  .card .ico svg { width: 22px; height: 22px; }
+  .card strong { font-size: 1.02rem; }
+  .card p { margin: 0; color: var(--muted); font-size: .9rem; }
+  .card .tag { margin-top: auto; padding-top: 6px; font-size: .75rem; color: var(--c); font-weight: 600; letter-spacing: .02em; }
+  .card.pronto { border-style: dashed; }
+  .card.pronto .tag { color: var(--muted); }
+
+  .docs { margin: 14px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 14px;
+    background: var(--surface); overflow: hidden; }
+  .docs li + li { border-top: 1px solid var(--line); }
+  .docs a { display: flex; align-items: center; gap: 10px; padding: 11px 14px; text-decoration: none; }
+  .docs a:hover { background: var(--cs); }
+  .docs svg { width: 18px; height: 18px; color: var(--c); flex: none; }
+  .docs .ext { margin-left: auto; font-size: .75rem; color: var(--muted); text-transform: uppercase; }
+  .docs-head { margin: 18px 0 0; font-size: .85rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+
+  .vacio { display: none; margin: 24px 0; padding: 20px; border-radius: 14px; background: var(--surface); border: 1px dashed var(--line); }
+  .vacio.ver { display: block; }
+  .vacio p { margin: 0 0 12px; }
+  .vacio .btn { padding: 10px 16px; }
+
+  /* Ayuda */
+  .ayuda { margin-top: 36px; padding: 22px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+  .ayuda h2 { font: 600 1.25rem var(--serif); margin: 0 0 12px; }
+  .ayuda ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); counter-reset: paso; }
+  .ayuda li { counter-increment: paso; padding-left: 40px; position: relative; color: var(--muted); font-size: .92rem; }
+  .ayuda li::before { content: counter(paso); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--edu-soft); color: var(--edu); font-weight: 700; }
+  .ayuda li b { color: var(--ink); display: block; }
+
+  footer { border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; padding: 18px 0 28px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: space-between; }
+
+  @media (max-width: 560px) {
+    .estado { display: none; }
+    .buscar button { padding: 0 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { a.card { transition: none; } a.card:hover { transform: none; } }
+</style>
+</head>
+<body>
+
+<!-- Íconos reutilizados -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></symbol>
+  <symbol id="i-wiki" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M8.5 11.5h2l1-2 1.5 4 1-2h1.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 5 3-5 3z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></symbol>
+</svg>
+
+<header>
+  <div class="wrap">
+    <div class="top">
+      <!-- Logo: montaña con señal -->
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 40 18 20l7 9 5-6 14 17z" fill="currentColor" fill-opacity=".14"/>
+        <path d="M30 15a6 6 0 0 1 6-6M25 15a11 11 0 0 1 11-11"/><circle cx="36" cy="15" r="2" fill="currentColor" stroke="none"/>
+      </svg>
+      <div class="brand">Hub Rural<small>Biblioteca y servicios de la comunidad</small></div>
+      <span class="estado">Funciona sin Internet</span>
+    </div>
+
+    <h1>Aprende, consulta y cuida tu salud, aunque no haya señal.</h1>
+    <p class="lead">Todo lo que está aquí vive en el servidor del puesto. No gasta datos y abre igual de rápido con o sin conexión a Internet.</p>
+
+    <form class="buscar" role="search" id="f-buscar">
+      <label>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="sr" style="position:absolute;left:-9999px">Buscar en el hub</span>
+        <input id="q" type="search" placeholder="Buscar guías, documentos o temas…" autocomplete="off">
+      </label>
+      <button type="submit">Buscar</button>
+    </form>
+
+    <div class="filtros" role="group" aria-label="Categorías">
+      <button type="button" data-f="todo" aria-pressed="true">Todo</button>
+      <button type="button" data-f="educacion" aria-pressed="false">Educación</button>
+      <button type="button" data-f="salud" aria-pressed="false">Salud</button>
+      <button type="button" data-f="ocio" aria-pressed="false">Ocio</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="vacio" id="vacio" aria-live="polite">
+    <p>No encontramos «<b id="vacio-q"></b>» en el hub.</p>
+    <a class="btn" id="vacio-wiki" href="https://wiki.hub.lan/">Buscar en Wikipedia sin conexión</a>
+  </div>
+
+  <section class="cat" data-cat="educacion">
+    <div class="cat-head"><h2>Educación</h2><span>Para estudiar y repasar</span></div>
+    <div class="grid">
+      <a class="card" data-item href="https://wiki.hub.lan/" data-k="enciclopedia articulos historia ciencia kiwix">
+        <span class="ico"><svg><use href="#i-wiki"/></svg></span>
+        <strong>Wikipedia sin conexión</strong>
+        <p>La enciclopedia completa en español, con buscador propio.</p>
+        <span class="tag">SIN INTERNET</span>
+      </a>
+      <a class="card" data-item href="/sitios/docs.python.org/es/3/tutorial/index.html" data-k="programacion computador codigo curso">
+        <span class="ico"><svg><use href="#i-code"/></svg></span>
+        <strong>Tutorial de Python</strong>
+        <p>Curso oficial de programación, paso a paso y en español.</p>
+        <span class="tag">SIN INTERNET</span>
+      </a>
+      <a class="card" data-item href="/sitios/" data-k="paginas web guardadas copias">
+        <span class="ico"><svg><use href="#i-folder"/></svg></span>
+        <strong>Sitios educativos guardados</strong>
+        <p>Páginas web copiadas al hub para leerlas sin conexión.</p>
+        <span class="tag">SIN INTERNET</span>
+      </a>
+    </div>
+    <p class="docs-head" hidden>Documentos</p>
+    <ul class="docs" hidden></ul>
+  </section>
+
+  <section class="cat" data-cat="salud">
+    <div class="cat-head"><h2>Salud</h2><span>Guías para la comunidad y el puesto</span></div>
+    <div class="grid">
+      <a class="card" data-item href="https://wiki.hub.lan/" data-k="enfermedades medicina sintomas primeros auxilios">
+        <span class="ico"><svg><use href="#i-heart"/></svg></span>
+        <strong>Consultar un tema de salud</strong>
+        <p>Busca enfermedades, síntomas o medicamentos en la Wikipedia local.</p>
+        <span class="tag">SIN INTERNET</span>
+      </a>
+      <a class="card" data-item href="/pdf/salud/" data-k="guias protocolos documentos pdf">
+        <span class="ico"><svg><use href="#i-plus"/></svg></span>
+        <strong>Guías y protocolos</strong>
+        <p>Documentos para promotores y personal de salud.</p>
+        <span class="tag">SIN INTERNET</span>
+      </a>
+    </div>
+    <p class="docs-head" hidden>Documentos</p>
+    <ul class="docs" hidden></ul>
+  </section>
+
+  <section class="cat" data-cat="ocio">
+    <div class="cat-head"><h2>Ocio</h2><span>Para leer y pasar el rato</span></div>
+    <div class="grid">
+      <a class="card" data-item href="/pdf/ocio/" data-k="libros cuentos lectura">
+        <span class="ico"><svg><use href="#i-book"/></svg></span>
+        <strong>Lecturas</strong>
+        <p>Cuentos, libros y revistas para descargar en el celular.</p>
+        <span class="tag">SIN INTERNET</span>
+      </a>
+      <div class="card pronto" data-item data-k="videos peliculas musica series jellyfin">
+        <span class="ico"><svg><use href="#i-play"/></svg></span>
+        <strong>Videos y música</strong>
+        <p>Películas, series y música desde el hub.</p>
+        <span class="tag">PRÓXIMAMENTE</span>
+      </div>
+    </div>
+    <p class="docs-head" hidden>Documentos</p>
+    <ul class="docs" hidden></ul>
+  </section>
+
+  <section class="ayuda" aria-labelledby="ayuda-t">
+    <h2 id="ayuda-t">¿Primera vez aquí?</h2>
+    <ol>
+      <li><b>Conéctate al WiFi</b>Hub-Publica para la comunidad, Hub-Salud para el personal del puesto.</li>
+      <li><b>Instala el certificado</b>Así el celular confía en el hub y no muestra advertencias. <a href="http://portal.hub.lan/certificado.html">Ver cómo</a>.</li>
+      <li><b>¿Necesitas Internet?</b>Abre cualquier página web y aparecerá el acceso. En Hub-Publica tienes 2 horas gratis al día; tu tiempo restante está en <a href="https://wifi-publica.hub.lan/status">wifi-publica.hub.lan/status</a>.</li>
+    </ol>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Hub Rural · Proyecto Redes Rurales · Icesi 2026</span>
+    <span>portal.hub.lan</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const $q = document.getElementById('q');
+  const vacio = document.getElementById('vacio');
+  let filtro = 'todo';
+
+  function aplicar() {
+    const t = norm($q.value.trim());
+    let total = 0;
+    document.querySelectorAll('section.cat').forEach(sec => {
+      let n = 0;
+      sec.querySelectorAll('[data-item]').forEach(el => {
+        const ok = !t || norm(el.textContent + ' ' + (el.dataset.k || '')).includes(t);
+        el.hidden = !ok;
+        if (ok) n++;
+      });
+      const lista = sec.querySelector('.docs');
+      const docsVisibles = [...lista.children].some(li => !li.hidden);
+      lista.hidden = sec.querySelector('.docs-head').hidden = !docsVisibles;
+      sec.hidden = (filtro !== 'todo' && sec.dataset.cat !== filtro) || n === 0;
+      if (!sec.hidden) total += n;
+    });
+    vacio.classList.toggle('ver', !!t && total === 0);
+    document.getElementById('vacio-q').textContent = $q.value.trim();
+    document.getElementById('vacio-wiki').href = 'https://wiki.hub.lan/search?pattern=' + encodeURIComponent($q.value.trim());
+  }
+
+  $q.addEventListener('input', aplicar);
+  // Enter: si no hay nada local, ir a la búsqueda de Kiwix
+  document.getElementById('f-buscar').addEventListener('submit', e => {
+    e.preventDefault();
+    aplicar();
+    if (vacio.classList.contains('ver')) location.href = document.getElementById('vacio-wiki').href;
+  });
+  document.querySelectorAll('.filtros button').forEach(b => b.addEventListener('click', () => {
+    filtro = b.dataset.f;
+    document.querySelectorAll('.filtros button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    aplicar();
+  }));
+
+  // Documentos: se leen del autoindex de Nginx
+  const enlaces = async ruta => {
+    const r = await fetch(ruta);
+    if (!r.ok) return [];
+    const doc = new DOMParser().parseFromString(await r.text(), 'text/html');
+    return [...doc.querySelectorAll('a[href]')].map(a => a.getAttribute('href'))
+      .filter(h => !/^(\.\.|\?|\/|#)|:\/\//.test(h));
+  };
+  const agregar = (cat, url) => {
+    const sec = document.querySelector(`section.cat[data-cat="${cat}"]`);
+    const archivo = decodeURIComponent(url.split('/').pop());
+    const punto = archivo.lastIndexOf('.');
+    const nombre = (punto > 0 ? archivo.slice(0, punto) : archivo).replace(/[-_]+/g, ' ');
+    const li = document.createElement('li');
+    li.dataset.item = '';
+    li.innerHTML = '<a><svg><use href="#i-doc"/></svg><span></span><span class="ext"></span></a>';
+    li.querySelector('a').href = url;
+    li.querySelector('span').textContent = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+    li.querySelector('.ext').textContent = punto > 0 ? archivo.slice(punto + 1) : '';
+    sec.querySelector('.docs').append(li);
+  };
+  (async () => {
+    try {
+      for (const h of await enlaces('/pdf/')) {
+        if (!h.endsWith('/')) { agregar('educacion', '/pdf/' + h); continue; }
+        const cat = norm(decodeURIComponent(h.slice(0, -1)));
+        if (!['educacion', 'salud', 'ocio'].includes(cat)) continue;
+        for (const f of await enlaces('/pdf/' + h)) if (!f.endsWith('/')) agregar(cat, '/pdf/' + h + f);
+      }
+    } catch (e) { /* abierto como archivo local o sin /pdf/: quedan las tarjetas */ }
+    aplicar();
+  })();
+})();
+</script>
+</body>
+</html>

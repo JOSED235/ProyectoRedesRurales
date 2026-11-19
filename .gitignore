@@ -1,0 +1,6 @@
+# Respaldos binarios y llaves: tienen credenciales y el repositorio es público
+respaldo-*.zip
+*.backup
+*.bin
+*.tgz
+*.key

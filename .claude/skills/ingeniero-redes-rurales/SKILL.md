@@ -18,7 +18,8 @@ Actúa como ingeniero de redes senior con experiencia en redes rurales, offline-
 | Fase 1.2 — laboratorio GNS3 (diseño consolidado probado) | `fase1-plan/laboratorio-gns3/*.pdf` |
 | Fase 2.1 — RPi5 física dentro del laboratorio | `fase2-prototipo/Fase2.1_*.pdf` |
 | Fase 2.2 — MikroTik físico (CCR2004 prestado) | `fase2-prototipo/Fase2.2_*.pdf`, `fase2-prototipo/README.md` |
-| Configuraciones reales | `configs/mikrotik/hub-base.rsc`, `configs/mikrotik/hub-ccr2004.rsc`, `configs/servidor/01-hub.yaml` |
+| Fase 2.3 — servicios, AP y portal cautivo (estado y pruebas) | `fase2-prototipo/Fase2.3_*.pdf`, `fase2-prototipo/README.md`, `fase2-prototipo/ARRANQUE-LAB.md` |
+| Configuraciones reales | `configs/mikrotik/hub-ccr2004-2026-11-18.rsc` (físico, último), `configs/mikrotik/hub-ccr2004-2026-11-17.rsc`, `configs/mikrotik/hub-ccr2004.rsc` (inicial 2.2), `configs/mikrotik/fase23-pendiente.rsc`, `configs/mikrotik/hub-base.rsc` (GNS3), `configs/servidor/` |
 
 Para leer los PDF: `pdftotext -layout <archivo> -` (Git Bash).
 
@@ -37,8 +38,10 @@ Para leer los PDF: `pdftotext -layout <archivo> -` (Git Bash).
 | — | Libre | `10.20.0.176/28`, `10.20.0.192/26` | — | crecimiento |
 | WAN | ether1 | DHCP de Starlink (GNS3: `192.168.122.0/24`) | — | — |
 
-- **Puertos MikroTik:** ether1 WAN · ether2 hub (acceso V10) · ether3 troncal AP (V10 untagged, V20/V30 tagged) · ether4 portátil admin (V10) · ether5 deshabilitado.
-- **CCR2004 prestado (Fase 2.2):** mismos roles en ether9 WAN (portátil *Compartida*, `10.42.0.0/24`) · ether10 hub · ether11 troncal AP · ether12 admin; el resto deshabilitado. Es de otro grupo: respaldar (`.backup` + `/export show-sensitive`) antes de resetear y restaurar al terminar cada sesión.
+- **Puertos MikroTik (GNS3/diseño):** ether1 WAN · ether2 hub (acceso V10) · ether3 troncal AP (V10 untagged, V20/V30 tagged) · ether4 portátil admin (V10) · ether5 deshabilitado.
+- **Puertos CCR2004 del laboratorio (físico, compartido con otro grupo):** ether9 WAN (portátil `10.42.0.0/24`) · ether10 hub · ether11 troncal AP · ether12 admin. AP de laboratorio: TP-Link TL-WA801ND en `10.20.0.163`. Antes de resetear, respaldar la configuración del otro grupo (`.backup` + `/export show-sensitive`) y restaurarla al terminar cada sesión.
+- **Servicios del hub (Fase 2):** con `apt` + systemd, sin Docker: dnsmasq (DHCP `.170–.174`, `.135–.158`, `.10–.126`; dominio `hub.lan`), chrony, Nginx HTTPS con CA de pruebas `*.hub.lan`, Kiwix, Squid `3129 intercept`, ufw. Disco en `/srv/cdn`. Docker solo si la Fase 3 lo justifica.
+- **Repositorio público:** nunca versionar contraseñas, `*.key`, `.backup` ni `.bin`.
 
 ## 3. Cómo trabajar
 

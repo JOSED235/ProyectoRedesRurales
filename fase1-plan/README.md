@@ -21,6 +21,6 @@ Al terminar la Fase 1 cada integrante tenía su propia versión del plan. Luego 
 
 ## Laboratorio GNS3 (1.2) — resultado
 
-Pruebas del 27/10/2026: salida a Internet del MikroTik, VLAN 10/20/30 en el bridge, servidor con `10.20.0.162/28`, DNS, navegación desde clientes de salud y pública, pruebas A1–A11 del cliente admin y etiquetas 802.1Q en Wireshark → **Cumple**. Aislamiento entre VLAN → **Pendiente (Fase 2, firewall)**.
+Pruebas del 27/10/2026: salida a Internet del MikroTik, VLAN 10/20/30 en el bridge, servidor con `10.20.0.162/28`, DNS, navegación desde clientes de salud y pública, pruebas A1–A11 del cliente admin y etiquetas 802.1Q en Wireshark → **Cumple**. Aislamiento entre VLAN → **Pendiente (Fase 2.3, firewall en [`fase23-pendiente.rsc`](../configs/mikrotik/fase23-pendiente.rsc))**.
 
-Configuraciones extraídas: [`configs/mikrotik/hub-base.rsc`](../configs/mikrotik/hub-base.rsc) y [`configs/servidor/01-hub.yaml`](../configs/servidor/01-hub.yaml).
+Configuraciones extraídas: [`configs/mikrotik/hub-base.rsc`](../configs/mikrotik/hub-base.rsc) y [`configs/servidor/01-hub.yaml`](../configs/servidor/01-hub.yaml). El estado del hardware físico está en [`fase2-prototipo/README.md`](../fase2-prototipo/README.md).

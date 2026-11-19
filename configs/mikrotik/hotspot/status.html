@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- hotspot/status.html — estado de la sesión (https://wifi-publica.hub.lan/status o wifi-salud.hub.lan/status)
+     Se refresca solo según refresh-timeout del perfil. Usa hub.css. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="-1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+$(if refresh-timeout)<meta http-equiv="refresh" content="$(refresh-timeout-secs)">$(endif)
+<title>Hub Rural · Mi conexión</title>
+<link rel="stylesheet" href="hub.css">
+</head>
+$(if trial == 'yes')<body>$(else)<body class="salud">$(endif)
+
+<main class="card">
+  <div class="marca">
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 40 18 20l7 9 5-6 14 17z" fill="currentColor" fill-opacity=".14"/>
+      <path d="M30 15a6 6 0 0 1 6-6M25 15a11 11 0 0 1 11-11"/><circle cx="36" cy="15" r="2" fill="currentColor" stroke="none"/>
+    </svg>
+    <div><b>Hub Rural</b><small>WiFi de la comunidad</small></div>
+  </div>
+
+  $(if trial == 'yes')<span class="red">HUB-PUBLICA</span>$(else)<span class="red">HUB-SALUD</span>$(endif)
+  <h1>Estás conectado a Internet</h1>
+  <p class="sub">$(if login-by == 'trial')Estás usando la prueba gratis.$(else)Sesión de $(username).$(endif)</p>
+
+  <dl class="cifras">
+    $(if session-time-left)
+    <div class="destacada"><dt>Te queda</dt><dd>$(session-time-left)</dd></div>
+    $(endif)
+    <div><dt>Conectado</dt><dd>$(uptime)</dd></div>
+    <div><dt>Equipo</dt><dd>$(ip)</dd></div>
+    <div><dt>Descargado</dt><dd>$(bytes-out-nice)</dd></div>
+    <div><dt>Subido</dt><dd>$(bytes-in-nice)</dd></div>
+  </dl>
+
+  <a class="btn" href="https://portal.hub.lan">Ver contenido sin conexión</a>
+  $(if login-by-mac != 'yes')
+  <form action="$(link-logout)" name="logout">
+    <button class="btn sec" type="submit">Cerrar sesión</button>
+  </form>
+  $(endif)
+</main>
+
+<p class="pie">Guarda esta página para ver cuánto tiempo te queda.$(if refresh-timeout) Se actualiza cada $(refresh-timeout).$(endif)</p>
+</body>
+</html>

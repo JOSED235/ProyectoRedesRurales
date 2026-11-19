@@ -1,0 +1,59 @@
+/* hotspot/hub.css — estilo común de las páginas del Hotspot (login, alogin, status, logout, error)
+   Mismos colores y tipografías que el portal (https://portal.hub.lan). Sin fuentes externas. */
+:root {
+  --bg: #f5f0e6; --surface: #fffdf8; --ink: #1f2a24; --muted: #5d6a62; --line: #e2dacb;
+  --c: #2f5d46; --cs: #e3eee6; --alert: #a3352a; --alert-soft: #f8e4e0; --focus: #c7832f;
+  --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+}
+.salud { --c: #24647f; --cs: #e0edf3; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #131916; --surface: #1b231f; --ink: #ebe5d9; --muted: #a2ada6; --line: #2b3530;
+    --c: #84bc9e; --cs: #1f3128; --alert: #f0a08f; --alert-soft: #3a1f1a; --focus: #e0a556; }
+  .salud { --c: #80b8d3; --cs: #1a2c35; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px 16px; background: var(--bg) radial-gradient(900px 340px at 50% -10%, var(--cs), transparent 70%) no-repeat;
+  color: var(--ink); font: 16px/1.5 var(--sans); }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 28px 24px; }
+.marca { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+.marca svg { width: 40px; height: 40px; color: var(--c); flex: none; }
+.marca b { font: 600 1.2rem/1.1 var(--serif); display: block; }
+.marca small { color: var(--muted); font-size: .82rem; }
+.red { display: inline-block; font-size: .78rem; font-weight: 600; letter-spacing: .03em; color: var(--c); background: var(--cs);
+  padding: 3px 10px; border-radius: 99px; margin-bottom: 10px; }
+h1 { font: 600 1.55rem/1.2 var(--serif); margin: 0 0 6px; }
+.sub { color: var(--muted); margin: 0 0 20px; font-size: .95rem; }
+.alert { background: var(--alert-soft); color: var(--alert); border-radius: 10px; padding: 10px 12px; font-size: .9rem; margin: 0 0 16px; }
+
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border-radius: 12px; border: 0;
+  font: 600 1rem var(--sans); text-decoration: none; cursor: pointer; background: var(--c); color: var(--surface); }
+.btn.sec { background: transparent; color: var(--ink); border: 1px solid var(--line); margin-top: 10px; }
+.btn svg { width: 20px; height: 20px; }
+form { margin: 0; }
+
+ul.datos { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 6px; font-size: .88rem; color: var(--muted); }
+ul.datos li::before { content: "·"; color: var(--c); font-weight: 700; margin-right: 8px; }
+
+label { display: block; font-size: .88rem; font-weight: 600; margin: 0 0 6px; }
+input[type=text], input[type=password] { width: 100%; font: inherit; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); margin-bottom: 14px; }
+.sep { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .8rem; margin: 18px 0 8px; }
+.sep::before, .sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* Cifras de la sesión (status y logout) */
+.cifras { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 18px; }
+.cifras div { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.cifras dt { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.cifras dd { margin: 2px 0 0; font: 600 1.15rem var(--sans); font-variant-numeric: tabular-nums; }
+.cifras .destacada { grid-column: 1 / -1; background: var(--cs); border-color: transparent; }
+.cifras .destacada dd { font-size: 1.6rem; color: var(--c); }
+
+.ok { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--cs); color: var(--c); margin-bottom: 14px; }
+.ok svg { width: 28px; height: 28px; }
+
+.pie { margin-top: 18px; color: var(--muted); font-size: .78rem; text-align: center; max-width: 400px; }

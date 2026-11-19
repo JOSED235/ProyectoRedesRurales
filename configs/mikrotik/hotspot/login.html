@@ -1,0 +1,88 @@
+<!doctype html>
+<!-- hotspot/login.html — página de acceso del Hotspot (hotspot-publica y hotspot-salud)
+     La comparten los dos servidores: con prueba gratis (trial) se muestra la vista de Hub-Publica;
+     sin prueba, el formulario de usuario y clave de Hub-Salud.
+     Usa hub.css (mismo directorio); no depende de css/ ni img/ de la plantilla de MikroTik.
+     Subir con: scp -O login.html hub.css admin@10.20.0.161:hotspot/ -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="-1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Hub Rural · Acceso</title>
+<link rel="stylesheet" href="hub.css">
+</head>
+
+$(if trial == 'yes')<body>$(else)<body class="salud">$(endif)
+
+$(if chap-id)
+<!-- CHAP: solo se usa si el perfil tiene login-by=http-chap (hoy es https) -->
+<form name="sendin" action="$(link-login-only)" method="post" style="display:none">
+  <input type="hidden" name="username">
+  <input type="hidden" name="password">
+  <input type="hidden" name="dst" value="$(link-orig)">
+</form>
+<script src="/md5.js"></script>
+<script>
+  function doLogin() {
+    document.sendin.username.value = document.login.username.value;
+    document.sendin.password.value = hexMD5('$(chap-id)' + document.login.password.value + '$(chap-challenge)');
+    document.sendin.submit();
+    return false;
+  }
+</script>
+$(endif)
+
+<main class="card">
+  <div class="marca">
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 40 18 20l7 9 5-6 14 17z" fill="currentColor" fill-opacity=".14"/>
+      <path d="M30 15a6 6 0 0 1 6-6M25 15a11 11 0 0 1 11-11"/><circle cx="36" cy="15" r="2" fill="currentColor" stroke="none"/>
+    </svg>
+    <div><b>Hub Rural</b><small>WiFi de la comunidad</small></div>
+  </div>
+
+  $(if error)<p class="alert" role="alert">$(error)</p>$(endif)
+
+  $(if trial == 'yes')
+  <span class="red">HUB-PUBLICA</span>
+  <h1>Bienvenido a la red de la comunidad</h1>
+  <p class="sub">Puedes usar el contenido del hub sin límite. Para Internet tienes una prueba gratis.</p>
+
+  <a class="btn" href="$(link-login-only)?dst=$(link-orig-esc)&amp;username=T-$(mac-esc)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+    Navegar en Internet gratis
+  </a>
+  <a class="btn sec" href="https://portal.hub.lan">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></svg>
+    Ver contenido sin conexión
+  </a>
+  <ul class="datos">
+    <li>2 horas de Internet al día por equipo</li>
+    <li>Velocidad compartida, hasta 2 Mbps</li>
+    <li>Wikipedia, guías y documentos no gastan tu tiempo</li>
+  </ul>
+
+  $(else)
+  <span class="red">HUB-SALUD</span>
+  <h1>Acceso del personal de salud</h1>
+  <p class="sub">Entra con el usuario y la clave que te dio el puesto de salud.</p>
+
+  <form name="login" action="$(link-login-only)" method="post" $(if chap-id)onsubmit="return doLogin()"$(endif)>
+    <input type="hidden" name="dst" value="$(link-orig)">
+    <label for="u">Usuario</label>
+    <input id="u" name="username" type="text" value="$(username)" autocomplete="username" autocapitalize="none" required>
+    <label for="p">Clave</label>
+    <input id="p" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit">Entrar</button>
+  </form>
+  <div class="sep">o sin iniciar sesión</div>
+  <a class="btn sec" href="https://portal.hub.lan">Ver contenido sin conexión</a>
+  $(endif)
+</main>
+
+<p class="pie">¿El celular mostró una advertencia de seguridad? <a href="http://portal.hub.lan/certificado.html">Instala el certificado del hub</a>.<br>Tu equipo: $(ip) · ¿Problemas? Pide ayuda en el puesto.</p>
+</body>
+</html>

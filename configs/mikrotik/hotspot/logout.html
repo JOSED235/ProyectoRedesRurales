@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- hotspot/logout.html — resumen al cerrar sesión. Usa hub.css. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="-1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Hub Rural · Sesión cerrada</title>
+<link rel="stylesheet" href="hub.css">
+</head>
+$(if trial == 'yes')<body>$(else)<body class="salud">$(endif)
+
+<main class="card">
+  <div class="marca">
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 40 18 20l7 9 5-6 14 17z" fill="currentColor" fill-opacity=".14"/>
+      <path d="M30 15a6 6 0 0 1 6-6M25 15a11 11 0 0 1 11-11"/><circle cx="36" cy="15" r="2" fill="currentColor" stroke="none"/>
+    </svg>
+    <div><b>Hub Rural</b><small>WiFi de la comunidad</small></div>
+  </div>
+
+  <h1>Cerraste sesión</h1>
+  <p class="sub">Ya no tienes Internet en este equipo. El contenido del hub sigue disponible.</p>
+
+  <dl class="cifras">
+    <div><dt>Tiempo usado</dt><dd>$(uptime)</dd></div>
+    <div><dt>Descargado</dt><dd>$(bytes-out-nice)</dd></div>
+  </dl>
+
+  <a class="btn" href="$(link-login)">Volver a entrar</a>
+  <a class="btn sec" href="https://portal.hub.lan">Ver contenido sin conexión</a>
+</main>
+</body>
+</html>

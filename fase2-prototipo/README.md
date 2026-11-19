@@ -77,12 +77,72 @@ Configuración aplicada: [`configs/mikrotik/hub-ccr2004.rsc`](../configs/mikroti
 
 > **Nota de laboratorio:** cuando se cargue el firewall, hay que aceptar la gestión desde `10.42.0.1` (portátil). Esa regla es solo del laboratorio y no se lleva a la Starlink real.
 
-## Siguiente
+## 2.3 — Servicios, access point y portal cautivo
 
-- Servicios en el hub: `dnsmasq` (DHCP con relay del MikroTik + DNS), `chrony`, Docker, Nginx, Squid, Mosquitto.
-- Firewall entre VLAN, Hotspot (portal cautivo) y colas en el MikroTik.
-- AP UniFi en `ether11` (SSID Hub-Salud → V20, Hub-Publica → V30).
-- Disco 2–4 TB por USB 3, NVMe con HAT, temperatura (`vcgencmd measure_temp`) y consumo.
+Documento: [`Fase2.3_Servicios_AP_Portal_Cautivo.pdf`](Fase2.3_Servicios_AP_Portal_Cautivo.pdf) · Para retomar en el lab: **[`ARRANQUE-LAB.md`](ARRANQUE-LAB.md)** · Sesión del 18/11: **[`SESION-2026-11-18.md`](SESION-2026-11-18.md)**
+
+Respaldo del 17/11/2026: [`configs/mikrotik/hub-ccr2004-2026-11-17.rsc`](../configs/mikrotik/hub-ccr2004-2026-11-17.rsc) y [`configs/servidor/etc/`](../configs/servidor/etc/).
+Estado del 18/11/2026 (pasos 7 y 8 aplicados): [`configs/mikrotik/hub-ccr2004-2026-11-18.rsc`](../configs/mikrotik/hub-ccr2004-2026-11-18.rsc) y [`configs/mikrotik/hotspot/login.html`](../configs/mikrotik/hotspot/login.html). Bridge, VLAN 10/20/30, puertos, IPs, relay, NAT y PBR quedaron iguales al 17/11; solo se agregó lo de los pasos 7 y 8.
+Rediseño del 19/11 (sin laboratorio): portal [`configs/servidor/www/index.html`](../configs/servidor/www/index.html) con categorías Educación/Salud/Ocio y búsqueda local, guía [`certificado.html`](../configs/servidor/www/certificado.html) y todas las páginas del Hotspot en español en [`configs/mikrotik/hotspot/`](../configs/mikrotik/hotspot/). Se suben con [`ARRANQUE-LAB.md`](ARRANQUE-LAB.md) C.3.
+
+**Decisión:** en el prototipo los servicios del hub se instalan con `apt` y corren con systemd, sin Docker. Así gastan menos RAM, arrancan sin depender de otro servicio y `RequiresMountsFor=/srv/cdn` los protege si falta el disco. Docker queda para la Fase 3 (Jellyfin y Mosquitto), si hace falta.
+
+| Paso | Qué | Dónde | Estado |
+|---|---|---|---|
+| 1 | ufw, SSH solo con llave, disco en `/srv/cdn` (ext4, `noatime`, `nofail`) | Raspberry | Hecho |
+| 2 | dnsmasq (DNS `hub.lan` + DHCP de las 3 VLAN) y relay DHCP | Raspberry, MikroTik | Hecho |
+| 3 | chrony como fuente de hora; MikroTik toma la hora de `10.20.0.162` | Raspberry, MikroTik | Hecho |
+| 4 | CA de pruebas, certificado `*.hub.lan`, Nginx HTTPS, Kiwix | Raspberry | Hecho |
+| 5 | Squid transparente (`3129 intercept`) + PBR `to-proxy` + netwatch | Raspberry, MikroTik | Hecho |
+| 6 | TP-Link TL-WA801ND: Hub-Salud (V20, WPA2) y Hub-Publica (V30, abierta) | TP-Link | Hecho |
+| 7 | Certificado en el MikroTik, Hotspot y enlace en `login.html` | MikroTik | Hecho (18/11) |
+| 8 | Firewall entre VLAN y colas | MikroTik | Hecho y comprobado (18/11) |
+| 9 | Pruebas P1–P15 con capturas | Todos | En curso (11/15 el 18/11) |
+| 10 | Portal rediseñado, guía del certificado y páginas del Hotspot; `host-record` de `wifi-publica`/`wifi-salud`; `certificado.html` por HTTP en Nginx | Raspberry, MikroTik | En el repo (19/11); falta subir y probar |
+
+El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El UniFi UAP-AC-M sigue siendo el del diseño final; la configuración SSID↔VLAN es la misma.
+
+### Pruebas (evidencia para la rúbrica)
+
+| ID | Criterio | Qué se prueba | Resultado esperado | Estado |
+|---|---|---|---|---|
+| P1 | Instalación y SO | Todo vuelve tras `sudo reboot` | 5× `active` y `/srv/cdn` con `noatime` | Pendiente |
+| P2 | Instalación y SO | Seguridad básica | `Permission denied (publickey)`; ufw activo | OK 18/11 (se volvió a poner `PasswordAuthentication no`) |
+| P3 | Conectividad | DHCP por relay, pública | IP `.10–.126`, gw `10.20.0.1`, DNS `10.20.0.162` | OK 18/11 (`10.20.0.57`) |
+| P4 | Conectividad | DHCP por relay, salud | IP `.135–.158`, gw `10.20.0.129` | OK 18/11 (`10.20.0.157`) |
+| P5 | Conectividad | DNS local y caché | `portal.hub.lan` → `10.20.0.162`; 2.ª consulta ≈ 0 ms | OK 18/11 (12 ms → 0 ms) |
+| P6 | Conectividad | Hora común | MikroTik `synchronized` con `10.20.0.162` | OK 18/11 |
+| P7 | Conectividad | Portal cautivo pública | Abre solo; con la prueba se navega | OK 18/11 |
+| P8 | Conectividad | Portal con usuario, salud | Navega; `/ip hotspot active print` | OK 18/11 (falta captura de `active print`) |
+| P9 | Caché estática | HTTPS obligatorio | `http://portal.hub.lan` termina en HTTPS con candado | OK 18/11 (301 → HTTPS, verificado con la CA) |
+| P10 | Caché estática | Contenido sin iniciar sesión | Portal, PDF y Wikipedia abren | Pendiente |
+| P11 | Caché estática | Sin Internet | P5, P9 y P10 siguen funcionando | OK 18/11 (WiFi del portátil apagado) |
+| P12 | Caché estática | Caché de Squid | `TCP_MISS` y luego `TCP_HIT`/`TCP_MEM_HIT` | Pendiente |
+| P13 | Caché estática | Squid caído no corta | Sigue navegando; `pbr-squid` desactivada | Pendiente |
+| P14 | Conectividad | Aislamiento entre VLAN | Desde Hub-Publica, `http://10.20.0.163` no abre | OK 18/11 |
+| P15 | Conectividad | Límite de ancho de banda | ≈ 2 Mbps de bajada por usuario | OK 18/11 |
+
+### Bitácora (causa → solución)
+
+| Problema | Causa | Solución |
+|---|---|---|
+| `ssh-copy-id` falla con `Permission denied (publickey)` | El paso 1.3 apagó la contraseña por SSH | Otra persona con acceso agrega la llave a `authorized_keys`, o se activa la contraseña un momento desde la consola local (ver `ARRANQUE-LAB.md`, A.1) |
+| `/etc/fstab` con dos montajes en `/srv/cdn` | Se agregó la línea del disco USB sin quitar la del archivo de 10 GB; los dos se llaman `HUBDATA` | Dejar una sola línea (`ARRANQUE-LAB.md`, B.4) |
+| El portátil no ve la web del AP | El AP solo responde a su red | NAT de laboratorio `lab: portatil a la web del AP`; se borra al cerrar |
+| SSH se cuelga tras `ufw enable` | Faltaba la regla del portátil | `sudo ufw allow from 10.42.0.0/24` desde la consola local |
+| 18/11: nginx, kiwix y squid caídos al arrancar | `/srv/cdn` sin montar: `fstab` con dos líneas `HUBDATA` (disco USB y `hubdata.img`). El portal y Kiwix estaban solo en `hubdata.img` | Se copiaron `www/` y `kiwix/` al disco USB (`cp -a`), se comentó la línea de `hubdata.img` (queda de respaldo) y se montó `/dev/sdb1` en `/srv/cdn` |
+| 18/11: Raspberry con fecha del 30/10 y MikroTik `waiting` en NTP | La Pi no tiene RTC con pila y arrancó sin Internet; chrony no resolvió los pools | `sudo systemctl restart chrony` con Internet. El MikroTik pasó a `synchronized` con 10.20.0.162. Sin la hora correcta, el certificado (emitido el 13/11) aparece como “aún no válido” |
+| 18/11: comandos de varias líneas por `ssh` fallan con `bad command name add` | Por SSH no interactivo cada línea se ejecuta sola y pierde el menú (`/ip firewall filter`) | Escribir la ruta completa en cada línea (`/ip firewall filter add ...`). Sin modo seguro, se usó un `/system scheduler` que borraba las reglas `hub:` a los 5 min si se perdía el acceso |
+| 18/11: el portátil pierde enlace en `ether9` | Cable o conector flojo | Cambiar el cable; al volver, repetir `ip route replace` |
+| 18/11: la Pi aceptaba contraseña por SSH (P2 fallaba) | `10-hub.conf` quedó con `PasswordAuthentication yes` tras usar el plan B de A.1 | `sed` a `no`, `sshd -t` y `systemctl restart ssh`. Después del plan B, cerrar siempre |
+| 18/11: SSH a la Pi sin llave del portátil nuevo | `ssh-copy-id` | La Pi aceptó contraseña (`publickey,password`); llave agregada con `ssh-copy-id`. En el MikroTik: `/user ssh-keys import` |
+
+### Siguiente (Fase 3)
+
+- Disco SSD de 2–4 TB definitivo y Squid con 50–100 GB de caché.
+- RTC con pila (`dtparam=rtc_bbat_vchg=3000000`) para tener hora sin Internet tras el apagado al 15 %.
+- Certificado real con certbot (DNS-01) cuando el profesor confirme el dominio.
+- Regenerar la CA de pruebas con `nameConstraints=critical,permitted;DNS:hub.lan`: la actual (`CA:TRUE` sin restricciones) podría firmar certificados para cualquier dominio si se filtra `ca.key`.
 
 ## Rúbrica Fase 2 (objetivo *Accomplished*)
 

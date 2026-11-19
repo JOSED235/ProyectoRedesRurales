@@ -1,0 +1,13 @@
+# /etc/systemd/system/kiwix.service — copia real del hub (respaldo 2026-11-17, Fase 2.3)
+[Unit]
+Description=Kiwix - contenido sin conexion
+After=network-online.target
+RequiresMountsFor=/srv/cdn
+
+[Service]
+ExecStart=/usr/bin/kiwix-serve --library --address=127.0.0.1 --port=8080 --monitorLibrary /srv/cdn/kiwix/library.xml
+DynamicUser=yes
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
