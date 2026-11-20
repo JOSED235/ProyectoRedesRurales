@@ -115,10 +115,10 @@ El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El Un
 | P7 | Conectividad | Portal cautivo pública | Abre solo; con la prueba se navega | OK 18/11 |
 | P8 | Conectividad | Portal con usuario, salud | Navega; `/ip hotspot active print` | OK 18/11 (falta captura de `active print`) |
 | P9 | Caché estática | HTTPS obligatorio | `http://portal.hub.lan` termina en HTTPS con candado | OK 18/11 (301 → HTTPS, verificado con la CA) |
-| P10 | Caché estática | Contenido sin iniciar sesión | Portal, PDF y Wikipedia abren | Pendiente |
+| P10 | Caché estática | Contenido sin iniciar sesión | Portal, PDF y Wikipedia abren | Parcial 19/11 (portal y Wikipedia en el celular; falta captura sin sesión del PDF) |
 | P11 | Caché estática | Sin Internet | P5, P9 y P10 siguen funcionando | OK 18/11 (WiFi del portátil apagado) |
-| P12 | Caché estática | Caché de Squid | `TCP_MISS` y luego `TCP_HIT`/`TCP_MEM_HIT` | Pendiente |
-| P13 | Caché estática | Squid caído no corta | Sigue navegando; `pbr-squid` desactivada | Pendiente |
+| P12 | Caché estática | Caché de Squid | `TCP_MISS` y luego `TCP_HIT`/`TCP_MEM_HIT` | OK 19/11 (0,57 s → 0,002 s; celular `TCP_MEM_HIT`) |
+| P13 | Caché estática | Squid caído no corta | Sigue navegando; `pbr-squid` desactivada | OK 19/11 (se desactiva y se reactiva sola) |
 | P14 | Conectividad | Aislamiento entre VLAN | Desde Hub-Publica, `http://10.20.0.163` no abre | OK 18/11 |
 | P15 | Conectividad | Límite de ancho de banda | ≈ 2 Mbps de bajada por usuario | OK 18/11 |
 

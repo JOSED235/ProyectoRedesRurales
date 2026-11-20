@@ -6,6 +6,8 @@ Lista corta para volver a dejar todo como quedó el **17/11/2026** y terminar lo
 
 **Qué falta:** ~~certificado en el MikroTik, Hotspot, firewall entre VLAN, colas, enlace en `login.html`~~ (hecho el 18/11). Quedan las pruebas P1, P10, P12 y P13 y las capturas. Ver **[`SESION-2026-11-18.md`](SESION-2026-11-18.md)**.
 
+> **19/11:** ver [`SESION-2026-11-19.md`](SESION-2026-11-19.md) para el estado y los pendientes. La WAN quedó en la Starlink Mini (sin señal en el lab) y el portátil en `ether12` (VLAN 10, DHCP `10.20.0.17x`).
+
 > **Desde el 18/11** el respaldo vigente es `hub-ccr2004-2026-11-18.backup` (cifrado con la contraseña de `admin`; está en `~/hub-rural/mikrotik/` del portátil de Jose David). Úsalo en B.2 en lugar del del 17/11 y salta la sección C.
 
 > Las contraseñas **no** están en este repositorio (es público). Pídelas a Carol o al compañero por un canal privado.

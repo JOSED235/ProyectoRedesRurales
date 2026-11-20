@@ -422,13 +422,81 @@ El 18/11 se aplicaron los pasos 7 y 8 sobre el respaldo del 17/11 y se comprobó
 
 El 19/11, sin laboratorio, se rediseñaron el portal (categorías Educación, Salud y Ocio, búsqueda local sin tildes, documentos leídos del listado de cada categoría y búsqueda en Kiwix), una guía para instalar la CA en Android, iPhone y PC servida también por HTTP, y todas las páginas del Hotspot en español con el estilo del portal (acceso, estado, cierre de sesión y errores). Falta subirlos y probarlos en el laboratorio.
 
+\subsection{Sesión del 19/11: estado inicial y contenido}
+El MikroTik conservaba la configuración del hub (identidad \texttt{hub-mikrotik} y la misma llave SSH del 18/11), así que no hubo que restaurar respaldos. Los cinco servicios de la Raspberry estaban activos y con la hora correcta, y \texttt{/srv/cdn} estaba montado por etiqueta con \texttt{noatime} (el disco ahora aparece como \texttt{sda1}). Se revisaron en vivo los pasos de contenido: el tutorial de Python y Kiwix (\texttt{wikipedia\_es\_physics\_mini}, 23~MB) responden 200 por HTTPS, y la búsqueda \texttt{/search?pattern=} que usa el portal rediseñado devuelve artículos. La carpeta de documentos estaba vacía, de modo que P10 no se habría podido cumplir.
+
+Para llenarla se agregaron nueve documentos en las tres categorías del portal (\texttt{pdf/salud}, \texttt{pdf/educacion} y \texttt{pdf/ocio}): cinco artículos de Wikipedia en español exportados a PDF (licencia CC~BY-SA) y cuatro guías propias generadas con un script en Python (\texttt{configs/servidor/contenido/guias.py}): lavado de manos según la OMS~\cite{who-hh}, primeros auxilios según la IFRC y la AHA~\cite{ifrc-fa}, una cartilla de matemáticas con ejemplos rurales y respuestas verificadas por el propio script, y una selección de ocho fábulas de Samaniego, de dominio público, tomadas de Wikisource. Cada guía de salud lleva el aviso de llamar al 123 y su lista de referencias. Los PDF de Wikipedia llevan el sufijo \texttt{-wikipedia} porque el portal muestra el nombre del archivo (Figs.~\ref{fig:pdfs} y~\ref{fig:guias}).
+
+\evid{f23-guias-pdf.png}{Portadas de las guías propias: lavado de manos, primeros auxilios, cartilla de matemáticas y fábulas de Samaniego.}{fig:guias}
+
+\evid{f23-pdf-categorias.png}{Documentos en \texttt{/srv/cdn/www/pdf/} por categoría, servidos por HTTPS como \texttt{application/pdf}.}{fig:pdfs}
+
+\evid{f23-kiwix-busqueda.png}{Servicios activos, disco montado con \texttt{noatime}, archivo ZIM de Kiwix y búsqueda en \texttt{wiki.hub.lan} con resultados.}{fig:kiwix}
+
+Luego se instaló el rediseño (paso C.3 de la guía de arranque). En el MikroTik se respaldaron las páginas anteriores del Hotspot y se subieron las nuevas, que usan los dos perfiles (Fig.~\ref{fig:hspag}). En la Raspberry se copiaron el portal y la guía del certificado; Nginx sirve ahora \texttt{certificado.html} también por HTTP, y dnsmasq resuelve \texttt{wifi-publica.hub.lan} y \texttt{wifi-salud.hub.lan} para que la página de estado funcione después de iniciar sesión (Fig.~\ref{fig:c3}).
+
+\evid{f23-hotspot-paginas.png}{Páginas del Hotspot rediseñadas en el MikroTik y perfiles \texttt{hs-publica} y \texttt{hs-salud} que las usan.}{fig:hspag}
+
+\evid{f23-c3-nginx-dns.png}{Guía del certificado por HTTP (200), resto del portal redirigido a HTTPS (301) y nombres del Hotspot en el DNS local.}{fig:c3}
+
+Con el celular en Hub-Publica, el portal lista los documentos de cada categoría leídos del listado de Nginx (Fig.~\ref{fig:celportal}), y una palabra que no está en el portal («volcán») lleva a la búsqueda de Kiwix, que devuelve seis artículos del libro de física (Fig.~\ref{fig:celwiki}). Al iniciar la prueba gratis, la página de estado rediseñada muestra el tiempo restante, la IP y el consumo (Fig.~\ref{fig:celstatus}), y el MikroTik registra la misma sesión con su cola dinámica bajo \texttt{publica} (Fig.~\ref{fig:hsact}).
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.32\columnwidth]{f23-p10-portal-salud.jpeg}\hfill
+\includegraphics[width=0.32\columnwidth]{f23-p10-busqueda-wiki.jpeg}\hfill
+\includegraphics[width=0.32\columnwidth]{f23-hotspot-status.jpeg}
+\caption{Celular en Hub-Publica: (izq.) sección Salud del portal con sus documentos; (centro) búsqueda de «volcán» en Kiwix; (der.) página de estado del Hotspot con la prueba gratis.}
+\label{fig:celportal}\label{fig:celwiki}\label{fig:celstatus}
+\end{figure}
+
+Después se pulió el portal. La identidad visual toma el paisaje andino: una cabecera con cordilleras en capas y un sol, y una paleta de verde páramo, verde guadua (Educación), azul río (Salud), fucsia buganvilla (Ocio) y amarillo maíz para resaltar. Los títulos usan Bricolage Grotesque y el texto Atkinson Hyperlegible, diseñada para leerse bien con baja visión; ambas (licencia OFL) se alojan en el hub, en \texttt{/fuentes/}, para que el portal no dependa de Internet. La búsqueda ahora consulta Kiwix en formato XML (que Kiwix sirve con \texttt{Access-Control-Allow-Origin: *}) y muestra los artículos dentro del portal, con la palabra resaltada, fragmentos sin restos de referencias y un botón para cargar más, en lugar de enviar al usuario a la página de resultados de Kiwix. Los documentos muestran el nombre con tildes, su tamaño y si vienen de Wikipedia, y el pie de página identifica a los autores (Figs.~\ref{fig:portal1}--\ref{fig:portal3}).
+
+\evid{f23-portal-inicio.png}{Portal rediseñado: cabecera con el buscador, resumen del contenido y filtros por categoría con su número de elementos.}{fig:portal1}
+
+\evid{f23-portal-busqueda.png}{Búsqueda de «energía»: los artículos de la Wikipedia sin conexión aparecen dentro del portal, con la palabra resaltada.}{fig:portal2}
+
+\evid{f23-portal-autores.png}{Pie de página del portal con el proyecto, la asignatura y los autores.}{fig:portal3}
+
+\evid{f23-hotspot-activo-prueba.png}{Sesión de prueba del celular (\texttt{10.20.0.57}) en \texttt{/ip hotspot active} y su cola dinámica dentro de \texttt{publica}.}{fig:hsact}
+
+
+\subsection{Pruebas de caché del 19/11 (P12 y P13)}
+Para P12 se pidió dos veces el mismo archivo a través de Squid desde la propia Raspberry: la primera petición tardó 0,57~s y la segunda 0,002~s, y el contador \texttt{client\_http.hits} del gestor de Squid subió en uno (Fig.~\ref{fig:p12}). Squid~6 ya no agrega la cabecera \texttt{X-Cache} propia, por eso se usaron los contadores. Luego, con el celular en Hub-Publica, la misma página se sirvió desde la memoria (\texttt{TCP\_MEM\_HIT}) con la IP del celular, lo que confirma también el desvío transparente (Fig.~\ref{fig:p12cel}).
+
+Para P13 se detuvo Squid. En menos de 10~s el \textit{netwatch} del MikroTik lo marcó caído y desactivó la regla \texttt{pbr-squid}, y el celular siguió navegando por HTTP sin pasar por Squid (Fig.~\ref{fig:p13a}). Al encenderlo, la regla se reactivó sola (Fig.~\ref{fig:p13b}).
+
+\evid{f23-p12-squid-hit.png}{P12: la segunda petición del mismo archivo sale de la caché de Squid (0,002~s) y sube el contador de aciertos.}{fig:p12}
+
+\evid{f23-p12-celular-log.png}{P12: registro de Squid con la petición del celular (\texttt{10.20.0.57}) servida como \texttt{TCP\_MEM\_HIT}.}{fig:p12cel}
+
+\evid{f23-p13-pbr-desactivado.png}{P13: con Squid detenido, \textit{netwatch} lo detecta caído y la regla \texttt{pbr-squid} queda desactivada (X).}{fig:p13a}
+
+\evid{f23-p13-celular.jpeg}{P13: con Squid detenido, el celular sigue cargando un sitio por HTTP.}{fig:p13cel}
+
+\evid{f23-p13-pbr-reactivado.png}{P13: al encender Squid, \textit{netwatch} vuelve a \texttt{up} y la regla \texttt{pbr-squid} se reactiva.}{fig:p13b}
+
+
+\subsection{Starlink Mini: integración física y operación sin señal (19/11)}
+La Starlink Mini se conectó por su puerto RJ45 a \texttt{ether9}, en modo normal (sin \textit{bypass}, para no tener que restablecerla de fábrica al devolverla), y el portátil de administración pasó a \texttt{ether12}, donde recibió \texttt{10.20.0.171} por DHCP en la VLAN~10. Antes del cambio se guardó \texttt{hub-antes-starlink} (Fig.~\ref{fig:slantes}). El MikroTik recibió de la Mini \texttt{192.168.1.159/24} con puerta de enlace \texttt{192.168.1.1}; respondieron el router de la Mini y la antena (\texttt{192.168.100.1}), pero no \texttt{8.8.8.8}, porque dentro del laboratorio la antena no tuvo línea de vista al cielo (Fig.~\ref{fig:slint}). Con el CGNAT de Starlink habría triple traducción en este modo; el \textit{bypass} la reduce a dos y queda para la instalación definitiva.
+
+Esa situación es justamente el caso real del sitio sin señal, y sirvió como prueba sin conexión: desde la VLAN~10 el DNS local resolvió los nombres del hub (los de Internet no), y el portal, los PDF, las fuentes, la búsqueda de la Wikipedia y el tutorial respondieron 200 por HTTPS con certificado válido en 15--60~ms (Fig.~\ref{fig:offline}). La Raspberry mantuvo la hora, el MikroTik siguió sincronizado con ella, los cinco servicios siguieron activos y el DHCP siguió entregando direcciones (Fig.~\ref{fig:offhora}). Para lo que sí necesita Internet (paquetes, contenido, certbot), la WAN se simula con el portátil en la misma interfaz \texttt{ether9}: el MikroTik no nota la diferencia porque en ambos casos recibe la dirección por DHCP. Es una limitación del entorno de prueba, no del diseño.
+
+\evid{f23-starlink-antes.png}{Respaldo \texttt{hub-antes-starlink} y WAN por el portátil (\texttt{10.42.0.116}) antes del cambio.}{fig:slantes}
+
+\evid{f23-starlink-integracion.png}{Starlink Mini en \texttt{ether9}: DHCP \texttt{192.168.1.159}, responden el router y la antena, pero no Internet (sin vista al cielo).}{fig:slint}
+
+\evid{f23-offline-starlink-sin-senal.png}{Hub sin Internet: DNS local, portal, PDF, fuentes, Wikipedia y tutorial en 200 por HTTPS.}{fig:offline}
+
+\evid{f23-offline-hora-dhcp.png}{Hub sin Internet: hora mantenida, MikroTik sincronizado con la Raspberry, servicios activos y concesiones DHCP.}{fig:offhora}
+
 %=====================================================================
 \section{Pruebas del prototipo}
 La Tabla~\ref{tab:pruebas} lista las pruebas, alineadas con los criterios de la rúbrica. Las Figs.~\ref{fig:ufw}--\ref{fig:cel} muestran la evidencia de varias de ellas.
 
 \begin{table*}[!t]
 \centering
-\caption{Pruebas de la Fase 2.3 (estado al 18/11/2026)}
+\caption{Pruebas de la Fase 2.3 (estado al 19/11/2026)}
 \label{tab:pruebas}
 \scriptsize
 \begin{tabularx}{\textwidth}{llYYl}
@@ -446,8 +514,8 @@ P8 & Conectividad & Portal con usuario, salud & Usuario de salud navega (falta c
 P9 & Caché & HTTPS obligatorio & HTTP $\rightarrow$ 301 a HTTPS, certificado válido & OK \\
 P10 & Caché & Contenido sin iniciar sesión & Portal, PDF y Wikipedia abren & Pendiente \\
 P11 & Caché & Sin Internet & DNS, portal, PDF y Wikipedia siguen en 200 & OK \\
-P12 & Caché & Caché de Squid & \texttt{TCP\_MISS} y luego \texttt{TCP\_HIT} & Pendiente \\
-P13 & Caché & Squid caído no corta & Se navega; \texttt{pbr-squid} desactivada & Pendiente \\
+P12 & Caché & Caché de Squid & 2.ª petición 0,57~s $\rightarrow$ 0,002~s; celular \texttt{TCP\_MEM\_HIT} (19/11) & OK \\
+P13 & Caché & Squid caído no corta & Se navega; \texttt{pbr-squid} se desactiva y se reactiva sola (19/11) & OK \\
 P14 & Conectividad & Aislamiento entre VLAN & Desde Hub-Publica no abren \texttt{.163} ni \texttt{.161} & OK \\
 P15 & Conectividad & Límite de ancho de banda & $\approx$2~Mbps por usuario, cola dinámica bajo \texttt{publica} & OK \\
 \bottomrule
@@ -464,6 +532,8 @@ P15 & Conectividad & Límite de ancho de banda & $\approx$2~Mbps por usuario, co
 \item \textbf{SSH colgado tras activar ufw:} faltaba la regla del portátil; se agregó desde la consola local.
 \item \textbf{El portátil no veía la web del AP:} el AP solo responde a su red; se usó un NAT de laboratorio que se borra al cerrar.
 \item \textbf{Enlace intermitente en \texttt{ether9}:} cable flojo; se cambió y se repitió la ruta hacia la red del hub.
+\item \textbf{La ruta del portátil hacia el hub desaparece (19/11):} NetworkManager la borra cada vez que reinicia la conexión compartida, y las copias por SSH quedan colgadas. Se vuelve a crear con \texttt{ip route replace}; con la Starlink real esta ruta ya no hace falta.
+\item \textbf{Proyecto Gutenberg no disponible desde la red del laboratorio:} respondía 503. Las fábulas de dominio público se tomaron de Wikisource en español, con reintentos y una caché local, porque Wikisource limita las consultas seguidas (429).
 \end{itemize}
 
 %=====================================================================
@@ -480,7 +550,7 @@ La Tabla~\ref{tab:rubrica} relaciona los criterios de la Fase~2 con la evidencia
 \textbf{Criterio} & \textbf{Evidencia} & \textbf{Estado} \\
 \midrule
 SO optimizado para 2--4~TB y seguridad básica & ext4 \texttt{noatime}, SMART, ufw, SSH con llave (P2); falta P1 y disco definitivo & Parcial \\
-Caché rápida, también offline & Squid transparente, Nginx, Kiwix (P9, P11); faltan P10, P12, P13 & Parcial \\
+Caché rápida, también offline & Squid transparente con conmutación, Nginx, Kiwix (P9, P11, P12, P13); falta cerrar P10 & Parcial \\
 DHCP/DNS robusto y portal cautivo & Relay, \texttt{hub.lan}, Hotspot por VLAN (P3--P8) & Cumple \\
 \bottomrule
 \end{tabularx}
@@ -488,8 +558,8 @@ DHCP/DNS robusto y portal cautivo & Relay, \texttt{hub.lan}, Hotspot por VLAN (P
 
 \subsection{Para cerrar la Fase 2}
 \begin{enumerate}
-\item Ejecutar P1, P10, P12 y P13 y tomar capturas de todas las pruebas.
-\item Subir y probar el portal rediseñado y las páginas del Hotspot.
+\item Ejecutar P1 y cerrar P10 sin sesión (P12 y P13 se cumplieron el 19/11).
+\item Llevar las páginas del Hotspot al estilo del portal pulido y tomar la captura de la app de Starlink.
 \item Respaldar \texttt{/etc} del hub y devolver los equipos prestados como estaban.
 \end{enumerate}
 
@@ -515,6 +585,8 @@ El diseño consolidado funciona en hardware físico. La segmentación por VLAN, 
 \bibitem{nginx} Nginx, ``Documentation,'' \url{https://nginx.org/en/docs/} (accedido el 16 oct. 2026).
 \bibitem{kiwix} Kiwix, ``Offline Internet content,'' \url{https://kiwix.org/} (accedido el 16 oct. 2026).
 \bibitem{jellyfin} Jellyfin, ``Documentation,'' \url{https://jellyfin.org/docs/} (accedido el 16 oct. 2026).
+\bibitem{who-hh} World Health Organization, \textit{WHO Guidelines on Hand Hygiene in Health Care}. Geneva: WHO, 2009.
+\bibitem{ifrc-fa} International Federation of Red Cross and Red Crescent Societies, \textit{International First Aid, Resuscitation, and Education Guidelines 2020}. Geneva: IFRC, 2020.
 \end{thebibliography}
 
 \end{document}

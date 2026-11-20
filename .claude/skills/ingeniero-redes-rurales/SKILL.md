@@ -20,7 +20,7 @@ Actúa como ingeniero de redes senior con experiencia en redes rurales, offline-
 | Fase 2.1 — RPi5 física dentro del laboratorio | `fase2-prototipo/Fase2.1_*.pdf` |
 | Fase 2.2 — MikroTik físico (CCR2004 prestado) | `fase2-prototipo/Fase2.2_*.pdf`, `fase2-prototipo/README.md` |
 | Fase 2.3 — servicios, AP y portal cautivo (estado y pruebas) | `fase2-prototipo/Fase2.3_*.pdf`, `fase2-prototipo/README.md`, `fase2-prototipo/ARRANQUE-LAB.md` |
-| Configuraciones reales | `configs/mikrotik/hub-ccr2004-2026-11-18.rsc` (físico, último), `configs/mikrotik/hub-ccr2004-2026-11-17.rsc`, `configs/mikrotik/hub-ccr2004.rsc` (inicial 2.2), `configs/mikrotik/fase23-pendiente.rsc`, `configs/mikrotik/hub-base.rsc` (GNS3), `configs/servidor/` |
+| Configuraciones reales | `configs/mikrotik/hub-ccr2004-2026-11-19.rsc` (físico, último, WAN Starlink Mini), `configs/mikrotik/hub-ccr2004-2026-11-18.rsc`, `configs/mikrotik/hub-ccr2004-2026-11-17.rsc`, `configs/mikrotik/hub-ccr2004.rsc` (inicial 2.2), `configs/mikrotik/fase23-pendiente.rsc`, `configs/mikrotik/hub-base.rsc` (GNS3), `configs/servidor/` |
 
 Para leer los PDF: `pdftotext -layout <archivo> -` (Git Bash).
 

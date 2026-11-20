@@ -162,7 +162,7 @@ ProyectoRedesRurales/
   - [x] 2.3 Hub: ufw, SSH con llave, `/srv/cdn` (ext4 `noatime`), dnsmasq + relay, chrony, Nginx HTTPS, Kiwix, Squid transparente (respaldo 17/11/2026).
   - [x] 2.3 Access point TP-Link con Hub-Salud (V20) y Hub-Publica (V30).
   - [x] 2.3 Certificado en el MikroTik, Hotspot (portal cautivo), firewall entre VLAN y colas (18/11/2026).
-  - [ ] 2.3 Pruebas P1–P15 con capturas (11 de 15 OK el 18/11; faltan P1, P10, P12 y P13).
+  - [ ] 2.3 Pruebas P1–P15 con capturas (13 de 15 OK el 19/11; faltan P1 y cerrar P10). Ver [`fase2-prototipo/SESION-2026-11-19.md`](fase2-prototipo/SESION-2026-11-19.md).
   - [ ] 2.3 Portal y páginas del Hotspot rediseñados (en el repo el 19/11; falta subirlos y probarlos en el lab).
   - [ ] Disco de 2–4 TB definitivo (hoy: disco USB prestado o archivo de 10 GB).
 - [x] Informe de avance IEEE (Fases 1 a 2.3): [`docs/InformeAvance.tex`](docs/InformeAvance.tex) y [PDF](docs/InformeAvance.pdf) (compilado con `texlive/texlive:latest-full`).

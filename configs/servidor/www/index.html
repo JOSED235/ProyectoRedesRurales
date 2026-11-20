@@ -1,121 +1,195 @@
 <!doctype html>
 <!-- /srv/cdn/www/index.html — portal del hub (https://portal.hub.lan)
-     Autocontenido: sin fuentes ni scripts externos, funciona sin Internet.
-     Los documentos se leen del autoindex de Nginx: /pdf/educacion/, /pdf/salud/, /pdf/ocio/.
-     Los PDF sueltos en /pdf/ aparecen en Educación. -->
+     Autocontenido: las fuentes están en /fuentes/ y no hay scripts externos; funciona sin Internet.
+     Los documentos se leen del autoindex de Nginx: /pdf/educacion/, /pdf/salud/, /pdf/ocio/
+     (los PDF sueltos en /pdf/ aparecen en Educación). La búsqueda consulta Kiwix en wiki.hub.lan
+     (formato XML, que Kiwix sirve con Access-Control-Allow-Origin: *).
+     portal.hub.lan/?q=palabra abre el portal con esa búsqueda. -->
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#173B2F">
 <title>Hub Rural</title>
+<link rel="preload" href="/fuentes/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fuentes/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  /* Fuentes alojadas en el hub (licencia SIL OFL 1.1) */
+  @font-face { font-family: "Bricolage"; src: url(/fuentes/bricolage-grotesque-latin-wght-normal.woff2) format("woff2");
+    font-weight: 200 800; font-display: swap; }
+  @font-face { font-family: "Atkinson"; src: url(/fuentes/atkinson-hyperlegible-latin-400-normal.woff2) format("woff2");
+    font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Atkinson"; src: url(/fuentes/atkinson-hyperlegible-latin-700-normal.woff2) format("woff2");
+    font-weight: 700; font-display: swap; }
+  @font-face { font-family: "Atkinson"; src: url(/fuentes/atkinson-hyperlegible-latin-400-italic.woff2) format("woff2");
+    font-weight: 400; font-style: italic; font-display: swap; }
+
   :root {
-    --bg: #f5f0e6; --surface: #fffdf8; --ink: #1f2a24; --muted: #5d6a62; --line: #e2dacb;
-    --edu: #2f5d46; --edu-soft: #e3eee6;
-    --salud: #24647f; --salud-soft: #e0edf3;
-    --ocio: #a9502b; --ocio-soft: #f6e6dc;
-    --focus: #c7832f;
-    --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+    /* Paisaje andino: páramo, guadua, río, buganvilla, maíz y niebla */
+    --paramo: #173B2F; --guadua: #2F7D4F; --rio: #1D6A8A; --buganvilla: #A8326A; --maiz: #F2B632;
+    --niebla: #EEF3EF; --cielo: #D7E8EC;
+    --bg: var(--niebla); --surface: #FFFFFF; --ink: #173B2F; --muted: #4F6259; --line: #D3DED8;
+    --edu: var(--guadua); --edu-soft: #E2F0E6;
+    --salud: var(--rio); --salud-soft: #DDEDF3;
+    --ocio: var(--buganvilla); --ocio-soft: #F6E1EA;
+    --sierra1: #9CC3AE; --sierra2: #5E9C7A; --sierra3: #2F6B4F; --sierra4: #173B2F;
+    --mark: #FBE3A6; --focus: #E09A12;
+    --display: "Bricolage", "Arial Narrow", system-ui, sans-serif;
+    --text: "Atkinson", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #131916; --surface: #1b231f; --ink: #ebe5d9; --muted: #a2ada6; --line: #2b3530;
-      --edu: #84bc9e; --edu-soft: #1f3128;
-      --salud: #80b8d3; --salud-soft: #1a2c35;
-      --ocio: #e39068; --ocio-soft: #352219;
-      --focus: #e0a556;
+      --bg: #0F1F19; --surface: #162A22; --ink: #E7EFE9; --muted: #A6B8AE; --line: #2A4237; --cielo: #18332B;
+      --edu: #7CC79A; --edu-soft: #1C3A2B;
+      --salud: #7DC1DE; --salud-soft: #16313C;
+      --ocio: #E88AB4; --ocio-soft: #3A1E2C;
+      --sierra1: #24473A; --sierra2: #1D3B30; --sierra3: #163026; --sierra4: #0F1F19;
+      --mark: #5C4A12; --focus: #F2B632;
     }
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--sans); }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.55 var(--text); }
   a { color: inherit; }
-  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
   .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  h1, h2, h3 { font-family: var(--display); letter-spacing: -0.01em; }
 
-  /* Encabezado */
-  header { border-bottom: 1px solid var(--line); background:
-    radial-gradient(1200px 300px at 85% -40%, var(--edu-soft), transparent 70%); }
-  .top { display: flex; align-items: center; gap: 12px; padding: 20px 0 8px; }
-  .top svg { width: 44px; height: 44px; flex: none; color: var(--edu); }
-  .brand { font: 600 1.35rem/1.1 var(--serif); }
-  .brand small { display: block; font: 400 .85rem var(--sans); color: var(--muted); }
-  .estado { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: .8rem;
-    color: var(--edu); background: var(--edu-soft); padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
-  .estado::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-  h1 { font: 600 clamp(1.7rem, 4.5vw, 2.6rem)/1.15 var(--serif); margin: 28px 0 8px; max-width: 20ch; }
-  .lead { color: var(--muted); margin: 0 0 20px; max-width: 56ch; }
+  /* ---------- Cabecera: cielo, sol y cordilleras ---------- */
+  .hero { position: relative; background: var(--cielo); overflow: hidden; }
+  .hero .wrap { position: relative; z-index: 2; }
+  .top { display: flex; align-items: center; gap: 10px; padding: 18px 0 0; }
+  .top svg { width: 36px; height: 36px; flex: none; color: var(--paramo); }
+  .brand { font: 700 1.3rem/1 var(--display); }
+  .estado { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: .85rem;
+    color: var(--ink); background: color-mix(in srgb, var(--surface) 70%, transparent); padding: 5px 12px; border-radius: 99px; }
+  .estado::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--guadua);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--guadua) 25%, transparent); }
+  h1 { font-weight: 750; font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.02; font-stretch: 85%;
+    margin: 34px 0 12px; max-width: 15ch; }
+  .lead { margin: 0 0 22px; max-width: 48ch; font-size: 1.05rem; color: var(--muted); }
+  .sol { position: absolute; right: 10%; bottom: clamp(50px, 9vw, 100px); width: clamp(90px, 13vw, 150px); aspect-ratio: 1; border-radius: 50%; background: var(--maiz); }
+  .sierra { display: block; width: 100%; height: clamp(90px, 16vw, 170px); margin-top: -40px; }
+  .sierra { position: relative; z-index: 1; }
+  .sierra .s1 { fill: var(--sierra1); } .sierra .s2 { fill: var(--sierra2); }
+  .sierra .s3 { fill: var(--sierra3); } .sierra .s4 { fill: var(--sierra4); }
 
-  /* Búsqueda y filtros */
-  .buscar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .buscar { display: flex; gap: 8px; max-width: 640px; position: relative; z-index: 2; }
   .buscar label { position: relative; flex: 1; }
-  .buscar svg { position: absolute; left: 14px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); color: var(--muted); }
-  .buscar input { width: 100%; font: inherit; font-size: 1.05rem; padding: 14px 14px 14px 44px; border-radius: 12px;
-    border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
-  .buscar button, .btn { font: inherit; font-weight: 600; border: 0; border-radius: 12px; padding: 0 18px;
-    background: var(--edu); color: var(--surface); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
-  .filtros { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 20px; }
-  .filtros button { font: inherit; font-size: .9rem; padding: 6px 14px; border-radius: 99px; cursor: pointer;
-    border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
-  .filtros button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .buscar svg { position: absolute; left: 15px; top: 50%; width: 22px; height: 22px; transform: translateY(-50%); color: var(--muted); }
+  .buscar input { width: 100%; font: inherit; font-size: 1.08rem; padding: 15px 14px 15px 48px; border-radius: 14px;
+    border: 2px solid var(--paramo); background: var(--surface); color: var(--ink); }
+  .buscar input::placeholder { color: var(--muted); }
+  .btn { font: 700 1rem var(--text); border: 0; border-radius: 14px; padding: 0 22px; min-height: 48px;
+    background: var(--paramo); color: #fff; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+  .btn:hover { background: var(--guadua); }
+  @media (prefers-color-scheme: dark) { .buscar input { border-color: var(--line); } .btn { background: var(--maiz); color: #1d1a0c; } .btn:hover { background: #ffd36b; } }
 
-  /* Categorías */
-  main { padding: 8px 0 40px; }
-  section.cat { padding: 24px 0 8px; }
-  .cat-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
-  .cat-head h2 { font: 600 1.4rem var(--serif); margin: 0; }
-  .cat-head span { color: var(--muted); font-size: .9rem; }
+  /* Franja oscura de la cordillera más cercana */
+  .franja { background: var(--sierra4); color: #E7EFE9; }
+  .franja .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 4px 16px 20px; }
+  .resumen { margin: 0; font-size: .95rem; color: #BFD3C7; flex: 1 1 260px; }
+  .resumen b { color: #fff; }
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filtros button { font: inherit; font-size: .95rem; padding: 7px 14px; border-radius: 99px; cursor: pointer;
+    border: 1px solid #3E6555; background: transparent; color: #E7EFE9; min-height: 40px; }
+  .filtros button[aria-pressed="true"] { background: var(--maiz); border-color: var(--maiz); color: #1d1a0c; font-weight: 700; }
+  .filtros .n { margin-left: 6px; opacity: .75; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Contenido ---------- */
+  main { padding: 12px 0 40px; }
+  section.cat { padding: 28px 0 6px; }
   .cat[data-cat="educacion"] { --c: var(--edu); --cs: var(--edu-soft); }
   .cat[data-cat="salud"] { --c: var(--salud); --cs: var(--salud-soft); }
   .cat[data-cat="ocio"] { --c: var(--ocio); --cs: var(--ocio-soft); }
-  .cat-head h2::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
-    background: var(--c); margin-right: 10px; vertical-align: middle; }
+  .cat-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 14px;
+    padding-bottom: 10px; border-bottom: 3px solid var(--c); }
+  .cat-head h2 { font-size: 1.75rem; font-weight: 700; margin: 0; color: var(--c); line-height: 1.1; }
+  .cat-head span { color: var(--muted); }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
-  .card { display: flex; flex-direction: column; gap: 6px; padding: 16px; border-radius: 14px; text-decoration: none;
-    background: var(--surface); border: 1px solid var(--line); transition: border-color .15s, transform .15s; }
-  a.card:hover { border-color: var(--c); transform: translateY(-2px); }
-  .card .ico { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--cs); color: var(--c); }
-  .card .ico svg { width: 22px; height: 22px; }
-  .card strong { font-size: 1.02rem; }
-  .card p { margin: 0; color: var(--muted); font-size: .9rem; }
-  .card .tag { margin-top: auto; padding-top: 6px; font-size: .75rem; color: var(--c); font-weight: 600; letter-spacing: .02em; }
-  .card.pronto { border-style: dashed; }
-  .card.pronto .tag { color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .card { display: grid; grid-template-columns: 44px 1fr; gap: 4px 14px; align-items: start; padding: 16px;
+    border-radius: 16px; text-decoration: none; background: var(--surface); border: 1px solid var(--line); }
+  a.card:hover { border-color: var(--c); }
+  a.card:hover strong { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  .card .ico { grid-row: span 2; width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--cs); color: var(--c); }
+  .card .ico svg { width: 24px; height: 24px; }
+  .card strong { font: 650 1.12rem/1.25 var(--display); }
+  .card p { margin: 0; color: var(--muted); font-size: .95rem; }
+  .card.pronto { border-style: dashed; background: transparent; }
+  .card .pronto-txt { grid-column: 2; font-size: .85rem; color: var(--muted); font-style: italic; }
 
-  .docs { margin: 14px 0 0; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 14px;
-    background: var(--surface); overflow: hidden; }
+  .docs-head { margin: 22px 0 8px; font: 650 1.05rem var(--display); }
+  .docs { margin: 0; padding: 0; list-style: none; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
   .docs li + li { border-top: 1px solid var(--line); }
-  .docs a { display: flex; align-items: center; gap: 10px; padding: 11px 14px; text-decoration: none; }
+  .docs a { display: flex; align-items: center; gap: 12px; padding: 13px 16px; text-decoration: none; min-height: 52px; }
   .docs a:hover { background: var(--cs); }
-  .docs svg { width: 18px; height: 18px; color: var(--c); flex: none; }
-  .docs .ext { margin-left: auto; font-size: .75rem; color: var(--muted); text-transform: uppercase; }
-  .docs-head { margin: 18px 0 0; font-size: .85rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .docs svg { width: 20px; height: 20px; color: var(--c); flex: none; }
+  .docs .nombre { min-width: 0; }
+  .docs .meta { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; flex: none; color: var(--muted); font-size: .85rem; }
+  .docs .fuente { padding: 1px 8px; border-radius: 99px; background: var(--cs); color: var(--c); font-size: .8rem; }
+  .docs li.cargando { padding: 18px 16px; }
+  .docs li.cargando span { display: block; height: 12px; border-radius: 6px; width: 55%; background: var(--line); }
 
-  .vacio { display: none; margin: 24px 0; padding: 20px; border-radius: 14px; background: var(--surface); border: 1px dashed var(--line); }
-  .vacio.ver { display: block; }
+  /* ---------- Resultados de la Wikipedia ---------- */
+  .vacio { margin: 28px 0 0; padding: 20px; border-radius: 16px; background: var(--surface); border: 1px dashed var(--line); }
   .vacio p { margin: 0 0 12px; }
-  .vacio .btn { padding: 10px 16px; }
+  .wiki-res { margin-top: 28px; }
+  .wiki-res .cat-head { --c: var(--edu); }
+  .wiki-res ol { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .wiki-res li + li { border-top: 1px solid var(--line); }
+  .wiki-res li a { display: block; padding: 14px 18px; text-decoration: none; }
+  .wiki-res li a:hover { background: var(--edu-soft); }
+  .wiki-res li b { display: block; font: 650 1.15rem/1.25 var(--display); color: var(--edu); }
+  .wiki-res li a:hover b { text-decoration: underline; text-underline-offset: 3px; }
+  .wiki-res .frag { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    margin-top: 4px; color: var(--muted); font-size: .95rem; max-width: 75ch; }
+  .wiki-res .libro { display: block; margin-top: 6px; font-size: .82rem; color: var(--muted); }
+  mark { background: var(--mark); color: inherit; padding: 0 2px; border-radius: 3px; }
+  .wiki-pie { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+  .btn-sec { font: 700 .95rem var(--text); padding: 10px 16px; min-height: 44px; border-radius: 12px; cursor: pointer;
+    border: 2px solid var(--edu); background: transparent; color: var(--edu); }
+  .btn-sec:hover { background: var(--edu-soft); }
+  .wiki-pie small { color: var(--muted); }
 
-  /* Ayuda */
-  .ayuda { margin-top: 36px; padding: 22px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
-  .ayuda h2 { font: 600 1.25rem var(--serif); margin: 0 0 12px; }
-  .ayuda ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); counter-reset: paso; }
-  .ayuda li { counter-increment: paso; padding-left: 40px; position: relative; color: var(--muted); font-size: .92rem; }
-  .ayuda li::before { content: counter(paso); position: absolute; left: 0; top: 0; width: 28px; height: 28px; border-radius: 50%;
-    display: grid; place-items: center; background: var(--edu-soft); color: var(--edu); font-weight: 700; }
+  /* ---------- Ayuda ---------- */
+  .ayuda { margin-top: 40px; padding: 24px; border-radius: 20px; background: var(--cielo); }
+  .ayuda h2 { font-size: 1.45rem; margin: 0 0 14px; }
+  .ayuda ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); counter-reset: paso; }
+  .ayuda li { counter-increment: paso; padding-left: 44px; position: relative; color: var(--muted); }
+  .ayuda li::before { content: counter(paso); position: absolute; left: 0; top: 0; width: 32px; height: 32px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--maiz); color: #1d1a0c; font: 700 1rem var(--display); }
   .ayuda li b { color: var(--ink); display: block; }
 
-  footer { border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; padding: 18px 0 28px; }
-  footer .wrap { display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: space-between; }
+  /* ---------- Pie con autores ---------- */
+  footer { margin-top: 48px; background: var(--sierra4); color: #BFD3C7; }
+  footer .sierra { margin-top: 0; height: 60px; background: var(--bg); }
+  .pie { display: grid; gap: 28px; grid-template-columns: 1.2fr 1fr; padding: 18px 16px 26px; }
+  .pie h2 { font-size: 1.4rem; color: #fff; margin: 0 0 8px; }
+  .pie h3 { font-size: 1.05rem; color: #fff; margin: 0 0 10px; font-weight: 650; }
+  .pie p { margin: 0 0 8px; max-width: 48ch; }
+  .autores { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .autores li { display: flex; align-items: center; gap: 12px; }
+  .autores .ini { width: 44px; height: 44px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    font: 700 1rem var(--display); background: var(--maiz); color: #1d1a0c; }
+  .autores b { display: block; color: #fff; }
+  .legal { border-top: 1px solid #2B4A3D; padding: 14px 16px 28px; display: flex; flex-wrap: wrap; gap: 6px 24px;
+    justify-content: space-between; font-size: .85rem; }
 
+  @media (max-width: 720px) { .pie { grid-template-columns: 1fr; } .sol { right: 6%; } }
   @media (max-width: 560px) {
-    .estado { display: none; }
-    .buscar button { padding: 0 14px; }
+    body { font-size: 16px; }
+    .estado { font-size: .8rem; padding: 4px 10px; }
+    .buscar .btn { padding: 0 16px; }
+    .sierra { margin-top: 4px; }
+    .sol { width: 60px; right: 8%; bottom: 22px; }
+    .filtros button { padding: 6px 11px; }
+    .docs .fuente { display: none; }
+    .card { grid-template-columns: 40px 1fr; }
   }
-  @media (prefers-reduced-motion: reduce) { a.card { transition: none; } a.card:hover { transform: none; } }
 </style>
 </head>
 <body>
@@ -132,139 +206,176 @@
   <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></symbol>
 </svg>
 
-<header>
+<header class="hero">
+  <div class="sol" aria-hidden="true"></div>
   <div class="wrap">
     <div class="top">
-      <!-- Logo: montaña con señal -->
-      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M4 40 18 20l7 9 5-6 14 17z" fill="currentColor" fill-opacity=".14"/>
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 40 18 20l7 9 5-6 14 17z" fill="currentColor" fill-opacity=".18"/>
         <path d="M30 15a6 6 0 0 1 6-6M25 15a11 11 0 0 1 11-11"/><circle cx="36" cy="15" r="2" fill="currentColor" stroke="none"/>
       </svg>
-      <div class="brand">Hub Rural<small>Biblioteca y servicios de la comunidad</small></div>
+      <span class="brand">Hub Rural</span>
       <span class="estado">Funciona sin Internet</span>
     </div>
 
     <h1>Aprende, consulta y cuida tu salud, aunque no haya señal.</h1>
-    <p class="lead">Todo lo que está aquí vive en el servidor del puesto. No gasta datos y abre igual de rápido con o sin conexión a Internet.</p>
+    <p class="lead">Todo lo que ves aquí está guardado en el puesto. No gasta datos y abre igual de rápido con o sin conexión.</p>
 
     <form class="buscar" role="search" id="f-buscar">
       <label>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <span class="sr" style="position:absolute;left:-9999px">Buscar en el hub</span>
-        <input id="q" type="search" placeholder="Buscar guías, documentos o temas…" autocomplete="off">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span class="sr-only">Buscar en el hub y en la Wikipedia</span>
+        <input id="q" type="search" placeholder="Busca un tema: vacunas, fracciones, energía…" autocomplete="off" enterkeyhint="search">
       </label>
-      <button type="submit">Buscar</button>
+      <button class="btn" type="submit">Buscar</button>
     </form>
+  </div>
+  <svg class="sierra" viewBox="0 0 1440 170" preserveAspectRatio="none" aria-hidden="true">
+    <path class="s1" d="M0 92C90 70 150 40 230 52S360 96 450 70 600 18 700 30 860 92 960 74 1110 26 1210 40 1360 82 1440 70V170H0z"/>
+    <path class="s2" d="M0 116C120 96 200 84 300 98S470 128 580 104 760 70 860 86 1040 124 1150 108 1330 86 1440 100V170H0z"/>
+    <path class="s3" d="M0 138C140 122 260 118 380 128S600 146 720 132 940 112 1060 124 1300 140 1440 128V170H0z"/>
+    <path class="s4" d="M0 156C200 146 380 150 560 154S900 146 1100 150 1340 156 1440 152V170H0z"/>
+  </svg>
+</header>
 
-    <div class="filtros" role="group" aria-label="Categorías">
+<div class="franja">
+  <div class="wrap">
+    <p class="resumen" id="resumen" aria-live="polite">Cargando lo que hay en el hub…</p>
+    <div class="filtros" role="group" aria-label="Mostrar categoría">
       <button type="button" data-f="todo" aria-pressed="true">Todo</button>
-      <button type="button" data-f="educacion" aria-pressed="false">Educación</button>
-      <button type="button" data-f="salud" aria-pressed="false">Salud</button>
-      <button type="button" data-f="ocio" aria-pressed="false">Ocio</button>
+      <button type="button" data-f="educacion" aria-pressed="false">Educación<span class="n"></span></button>
+      <button type="button" data-f="salud" aria-pressed="false">Salud<span class="n"></span></button>
+      <button type="button" data-f="ocio" aria-pressed="false">Ocio<span class="n"></span></button>
     </div>
   </div>
-</header>
+</div>
 
 <main class="wrap">
 
-  <div class="vacio" id="vacio" aria-live="polite">
-    <p>No encontramos «<b id="vacio-q"></b>» en el hub.</p>
-    <a class="btn" id="vacio-wiki" href="https://wiki.hub.lan/">Buscar en Wikipedia sin conexión</a>
+  <section class="wiki-res" id="wiki-res" hidden aria-live="polite">
+    <div class="cat-head"><h2>En la Wikipedia</h2><span id="wiki-total"></span></div>
+    <ol id="wiki-lista"></ol>
+    <div class="wiki-pie">
+      <button class="btn-sec" type="button" id="wiki-mas">Mostrar más resultados</button>
+      <small id="wiki-cuenta"></small>
+    </div>
+  </section>
+
+  <div class="vacio" id="vacio" hidden aria-live="polite">
+    <p>No hay nada sobre «<b id="vacio-q"></b>» en el hub ni en la Wikipedia guardada. Prueba con otra palabra o con una más general.</p>
   </div>
 
   <section class="cat" data-cat="educacion">
     <div class="cat-head"><h2>Educación</h2><span>Para estudiar y repasar</span></div>
     <div class="grid">
-      <a class="card" data-item href="https://wiki.hub.lan/" data-k="enciclopedia articulos historia ciencia kiwix">
-        <span class="ico"><svg><use href="#i-wiki"/></svg></span>
+      <a class="card" data-item href="https://wiki.hub.lan/" data-k="enciclopedia articulos historia ciencia kiwix fisica">
+        <span class="ico"><svg aria-hidden="true"><use href="#i-wiki"/></svg></span>
         <strong>Wikipedia sin conexión</strong>
-        <p>La enciclopedia completa en español, con buscador propio.</p>
-        <span class="tag">SIN INTERNET</span>
+        <p>Artículos de Wikipedia en español guardados en el hub.</p>
       </a>
       <a class="card" data-item href="/sitios/docs.python.org/es/3/tutorial/index.html" data-k="programacion computador codigo curso">
-        <span class="ico"><svg><use href="#i-code"/></svg></span>
-        <strong>Tutorial de Python</strong>
-        <p>Curso oficial de programación, paso a paso y en español.</p>
-        <span class="tag">SIN INTERNET</span>
+        <span class="ico"><svg aria-hidden="true"><use href="#i-code"/></svg></span>
+        <strong>Curso de Python</strong>
+        <p>Aprende a programar paso a paso con el tutorial oficial.</p>
       </a>
       <a class="card" data-item href="/sitios/" data-k="paginas web guardadas copias">
-        <span class="ico"><svg><use href="#i-folder"/></svg></span>
-        <strong>Sitios educativos guardados</strong>
-        <p>Páginas web copiadas al hub para leerlas sin conexión.</p>
-        <span class="tag">SIN INTERNET</span>
+        <span class="ico"><svg aria-hidden="true"><use href="#i-folder"/></svg></span>
+        <strong>Páginas guardadas</strong>
+        <p>Sitios web copiados al hub para leerlos sin conexión.</p>
       </a>
     </div>
-    <p class="docs-head" hidden>Documentos</p>
+    <h3 class="docs-head" hidden>Documentos</h3>
     <ul class="docs" hidden></ul>
   </section>
 
   <section class="cat" data-cat="salud">
-    <div class="cat-head"><h2>Salud</h2><span>Guías para la comunidad y el puesto</span></div>
+    <div class="cat-head"><h2>Salud</h2><span>Para la comunidad y el personal del puesto</span></div>
     <div class="grid">
-      <a class="card" data-item href="https://wiki.hub.lan/" data-k="enfermedades medicina sintomas primeros auxilios">
-        <span class="ico"><svg><use href="#i-heart"/></svg></span>
+      <a class="card" data-item href="https://wiki.hub.lan/" data-k="enfermedades medicina sintomas">
+        <span class="ico"><svg aria-hidden="true"><use href="#i-heart"/></svg></span>
         <strong>Consultar un tema de salud</strong>
-        <p>Busca enfermedades, síntomas o medicamentos en la Wikipedia local.</p>
-        <span class="tag">SIN INTERNET</span>
+        <p>Escribe arriba una enfermedad, un síntoma o un medicamento.</p>
       </a>
-      <a class="card" data-item href="/pdf/salud/" data-k="guias protocolos documentos pdf">
-        <span class="ico"><svg><use href="#i-plus"/></svg></span>
+      <a class="card" data-item href="/pdf/salud/" data-k="guias protocolos documentos pdf primeros auxilios lavado manos">
+        <span class="ico"><svg aria-hidden="true"><use href="#i-plus"/></svg></span>
         <strong>Guías y protocolos</strong>
-        <p>Documentos para promotores y personal de salud.</p>
-        <span class="tag">SIN INTERNET</span>
+        <p>Primeros auxilios, higiene y documentos para promotores.</p>
       </a>
     </div>
-    <p class="docs-head" hidden>Documentos</p>
+    <h3 class="docs-head" hidden>Documentos</h3>
     <ul class="docs" hidden></ul>
   </section>
 
   <section class="cat" data-cat="ocio">
     <div class="cat-head"><h2>Ocio</h2><span>Para leer y pasar el rato</span></div>
     <div class="grid">
-      <a class="card" data-item href="/pdf/ocio/" data-k="libros cuentos lectura">
-        <span class="ico"><svg><use href="#i-book"/></svg></span>
+      <a class="card" data-item href="/pdf/ocio/" data-k="libros cuentos lectura fabulas">
+        <span class="ico"><svg aria-hidden="true"><use href="#i-book"/></svg></span>
         <strong>Lecturas</strong>
-        <p>Cuentos, libros y revistas para descargar en el celular.</p>
-        <span class="tag">SIN INTERNET</span>
+        <p>Cuentos, fábulas y libros para leer en el celular.</p>
       </a>
       <div class="card pronto" data-item data-k="videos peliculas musica series jellyfin">
-        <span class="ico"><svg><use href="#i-play"/></svg></span>
+        <span class="ico"><svg aria-hidden="true"><use href="#i-play"/></svg></span>
         <strong>Videos y música</strong>
-        <p>Películas, series y música desde el hub.</p>
-        <span class="tag">PRÓXIMAMENTE</span>
+        <span class="pronto-txt">Llegará pronto.</span>
       </div>
     </div>
-    <p class="docs-head" hidden>Documentos</p>
+    <h3 class="docs-head" hidden>Documentos</h3>
     <ul class="docs" hidden></ul>
   </section>
 
   <section class="ayuda" aria-labelledby="ayuda-t">
     <h2 id="ayuda-t">¿Primera vez aquí?</h2>
     <ol>
-      <li><b>Conéctate al WiFi</b>Hub-Publica para la comunidad, Hub-Salud para el personal del puesto.</li>
-      <li><b>Instala el certificado</b>Así el celular confía en el hub y no muestra advertencias. <a href="http://portal.hub.lan/certificado.html">Ver cómo</a>.</li>
-      <li><b>¿Necesitas Internet?</b>Abre cualquier página web y aparecerá el acceso. En Hub-Publica tienes 2 horas gratis al día; tu tiempo restante está en <a href="https://wifi-publica.hub.lan/status">wifi-publica.hub.lan/status</a>.</li>
+      <li><b>Conéctate al WiFi</b>Hub-Publica es para la comunidad y Hub-Salud para el personal del puesto.</li>
+      <li><b>Instala el certificado</b>Así el celular confía en el hub y no muestra advertencias. <a href="http://portal.hub.lan/certificado.html">Ver cómo instalarlo</a>.</li>
+      <li><b>Navega en Internet</b>Abre cualquier página y aparecerá el acceso. En Hub-Publica tienes 2 horas gratis al día; mira cuánto te queda en <a href="https://wifi-publica.hub.lan/status">wifi-publica.hub.lan/status</a>.</li>
     </ol>
   </section>
 </main>
 
 <footer>
-  <div class="wrap">
-    <span>Hub Rural · Proyecto Redes Rurales · Icesi 2026</span>
-    <span>portal.hub.lan</span>
+  <svg class="sierra" viewBox="0 0 1440 170" preserveAspectRatio="none" aria-hidden="true">
+    <path class="s1" d="M0 92C90 70 150 40 230 52S360 96 450 70 600 18 700 30 860 92 960 74 1110 26 1210 40 1360 82 1440 70V170H0z"/>
+    <path class="s2" d="M0 116C120 96 200 84 300 98S470 128 580 104 760 70 860 86 1040 124 1150 108 1330 86 1440 100V170H0z"/>
+    <path class="s3" d="M0 138C140 122 260 118 380 128S600 146 720 132 940 112 1060 124 1300 140 1440 128V170H0z"/>
+    <path class="s4" d="M0 156C200 146 380 150 560 154S900 146 1100 150 1340 156 1440 152V170H0z"/>
+  </svg>
+  <div class="wrap pie">
+    <div>
+      <h2>Proyecto Redes Rurales</h2>
+      <p>Una red local que lleva Internet satelital, acceso por WiFi y contenido sin conexión a puestos de salud y escuelas rurales.</p>
+      <p>Infraestructura de Redes 2, Universidad Icesi, Cali. Profesor Andrés Navarro Cadavid, Ph.D.</p>
+    </div>
+    <div>
+      <h3>Autores</h3>
+      <ul class="autores">
+        <li><span class="ini" aria-hidden="true">JD</span><span><b>José David Rodríguez Pinilla</b>Estudiante de Ingeniería, Universidad Icesi</span></li>
+        <li><span class="ini" aria-hidden="true">CM</span><span><b>Carol Andrea Mosquera</b>Estudiante de Ingeniería, Universidad Icesi</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="wrap legal">
+    <span>© 2026 José David Rodríguez Pinilla y Carol Andrea Mosquera</span>
+    <span>Los documentos de Wikipedia se comparten con licencia CC BY-SA.</span>
   </div>
 </footer>
 
 <script>
 (() => {
   const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const $q = document.getElementById('q');
-  const vacio = document.getElementById('vacio');
-  let filtro = 'todo';
+  const $ = id => document.getElementById(id);
+  const $q = $('q');
+  const CATS = ['educacion', 'salud', 'ocio'];
+  const WIKI = 'https://wiki.hub.lan';
+  const POR_PAGINA = 6;
+  let filtro = 'todo', listos = false;
 
+  // ---------- Filtro local ----------
+  let localVisibles = 0;
   function aplicar() {
     const t = norm($q.value.trim());
-    let total = 0;
+    localVisibles = 0;
     document.querySelectorAll('section.cat').forEach(sec => {
       let n = 0;
       sec.querySelectorAll('[data-item]').forEach(el => {
@@ -276,19 +387,95 @@
       const docsVisibles = [...lista.children].some(li => !li.hidden);
       lista.hidden = sec.querySelector('.docs-head').hidden = !docsVisibles;
       sec.hidden = (filtro !== 'todo' && sec.dataset.cat !== filtro) || n === 0;
-      if (!sec.hidden) total += n;
+      if (!sec.hidden) localVisibles += n;
     });
-    vacio.classList.toggle('ver', !!t && total === 0);
-    document.getElementById('vacio-q').textContent = $q.value.trim();
-    document.getElementById('vacio-wiki').href = 'https://wiki.hub.lan/search?pattern=' + encodeURIComponent($q.value.trim());
+    actualizarVacio();
+  }
+  function actualizarVacio() {
+    const t = $q.value.trim();
+    $('vacio').hidden = !(t && listos && localVisibles === 0 && wiki.estado === 'sin');
+    $('vacio-q').textContent = t;
   }
 
-  $q.addEventListener('input', aplicar);
-  // Enter: si no hay nada local, ir a la búsqueda de Kiwix
-  document.getElementById('f-buscar').addEventListener('submit', e => {
-    e.preventDefault();
+  // ---------- Búsqueda en Kiwix, mostrada dentro del portal ----------
+  const wiki = { texto: '', cargados: 0, total: 0, pedido: 0, estado: '' };
+  // Kiwix devuelve fragmentos con restos de referencias; se dejan solo frases legibles con la palabra buscada
+  const REF = /consultado el|isbn|issn|doi[:.]|archivado|https?:|www\.|\(en inglés|pp?\.\s?\d|\d{4}\)\.|categoría|wikipedia:|displaystyle|[{}|=\\]/i;
+  function fragmento(s, buscado) {
+    const t = norm(buscado).split(/\s+/).filter(p => p.length > 2);
+    const frases = s.replace(/↑[^↑]*/g, ' ').replace(/\s+/g, ' ').replace(/^[.…\s]+|[.…\s]+$/g, '')
+      .split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])/)
+      .map(f => f.trim()).filter(f => f.length > 25 && !REF.test(f) && (f.match(/\d/g) || []).length < f.length / 12);
+    const conTermino = frases.filter(f => t.some(p => norm(f).includes(p)));
+    const elegidas = (conTermino.length ? conTermino : frases).slice(0, 2).join(' ');
+    return elegidas.replace(/^[a-záéíóúñ,;:)\]]/, m => m.toUpperCase());
+  }
+  // Resalta las palabras buscadas sin importar tildes ni mayúsculas
+  const VOC = { a: '[aáàä]', e: '[eéèë]', i: '[iíìï]', o: '[oóòö]', u: '[uúùü]', n: '[nñ]' };
+  function resaltar(destino, texto, buscado) {
+    const palabras = norm(buscado).split(/\s+/).filter(p => p.length > 2)
+      .map(p => [...p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')].map(c => VOC[c] || c).join(''));
+    if (!palabras.length) { destino.textContent = texto; return; }
+    const re = new RegExp('(' + palabras.join('|') + ')', 'gi');
+    texto.split(re).forEach((parte, i) => {
+      if (i % 2) { const m = document.createElement('mark'); m.textContent = parte; destino.append(m); }
+      else destino.append(parte);
+    });
+  }
+  async function buscarWiki(texto, mas = false) {
+    const caja = $('wiki-res'), id = ++wiki.pedido;
+    if (!mas) { wiki.texto = texto; wiki.cargados = 0; }
+    if (norm(texto).length < 3) { caja.hidden = true; wiki.estado = ''; actualizarVacio(); return; }
+    try {
+      const r = await fetch(`${WIKI}/search?format=xml&pageLength=${POR_PAGINA}&start=${wiki.cargados + 1}&pattern=${encodeURIComponent(texto)}`);
+      if (!r.ok) throw new Error(r.status);
+      const xml = new DOMParser().parseFromString(await r.text(), 'application/xml');
+      if (id !== wiki.pedido) return;                     // llegó tarde: ya se escribió otra cosa
+      const items = [...xml.querySelectorAll('item')];
+      wiki.total = +(xml.getElementsByTagNameNS('*', 'totalResults')[0]?.textContent) || items.length;
+      const ol = $('wiki-lista');
+      if (!mas) ol.replaceChildren();
+      const vistos = new Set([...ol.querySelectorAll('a')].map(a => a.getAttribute('href')));
+      for (const it of items) {
+        const href = WIKI + it.querySelector('link').textContent;
+        if (vistos.has(href)) continue;
+        const li = document.createElement('li'), a = document.createElement('a');
+        const b = document.createElement('b'), frag = document.createElement('span'), libro = document.createElement('span');
+        a.href = href;
+        resaltar(b, it.querySelector('title').textContent, texto);
+        frag.className = 'frag';
+        const txt = fragmento(it.querySelector('description')?.textContent || '', texto);
+        if (txt) resaltar(frag, txt, texto); else frag.hidden = true;
+        libro.className = 'libro';
+        libro.textContent = it.querySelector('book > title')?.textContent || 'Wikipedia';
+        a.append(b, frag, libro); li.append(a); ol.append(li);
+      }
+      wiki.cargados = ol.children.length;
+      wiki.estado = wiki.cargados ? 'con' : 'sin';
+      $('wiki-total').textContent = wiki.total === 1 ? '1 artículo' : `${wiki.total} artículos`;
+      $('wiki-cuenta').textContent = wiki.total > wiki.cargados ? `Viendo ${wiki.cargados} de ${wiki.total}` : '';
+      $('wiki-mas').hidden = wiki.cargados >= wiki.total || items.length === 0;
+      caja.hidden = !wiki.cargados;
+    } catch (e) {                                         // Kiwix apagado o sin acceso: se oculta la sección
+      if (id === wiki.pedido) { $('wiki-res').hidden = true; wiki.estado = 'error'; }
+    }
+    actualizarVacio();
+  }
+  $('wiki-mas').addEventListener('click', () => buscarWiki(wiki.texto, true));
+
+  let espera;
+  $q.addEventListener('input', () => {
     aplicar();
-    if (vacio.classList.contains('ver')) location.href = document.getElementById('vacio-wiki').href;
+    clearTimeout(espera);
+    espera = setTimeout(() => buscarWiki($q.value.trim()), 350);
+  });
+  $('f-buscar').addEventListener('submit', async e => {
+    e.preventDefault();
+    clearTimeout(espera);
+    aplicar();
+    await buscarWiki($q.value.trim());
+    const destino = !$('wiki-res').hidden && localVisibles === 0 ? $('wiki-res') : document.querySelector('main');
+    destino.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   });
   document.querySelectorAll('.filtros button').forEach(b => b.addEventListener('click', () => {
     filtro = b.dataset.f;
@@ -296,37 +483,84 @@
     aplicar();
   }));
 
-  // Documentos: se leen del autoindex de Nginx
+  // ---------- Documentos: se leen del autoindex de Nginx ----------
+  // Tildes que los nombres de archivo no llevan
+  const TILDES = { guia: 'guía', guias: 'guías', fabulas: 'fábulas', fabula: 'fábula', matematicas: 'matemáticas',
+    basica: 'básica', basicas: 'básicas', basico: 'básico', basicos: 'básicos', medico: 'médico', medica: 'médica',
+    practica: 'práctica', tecnica: 'técnica', musica: 'música', numeros: 'números', hidrologico: 'hidrológico',
+    nino: 'niño', ninos: 'niños', bebe: 'bebé', dia: 'día', dias: 'días', cancion: 'canción', historia: 'historia' };
+  const bonito = base => {
+    const s = base.replace(/[-_]+/g, ' ').trim().split(/\s+/).map(p => {
+      const l = p.toLowerCase();
+      return TILDES[l] || l.replace(/cion$/, 'ción');
+    }).join(' ');
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+  const tamano = b => !b ? '' : b < 1e6 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+
   const enlaces = async ruta => {
     const r = await fetch(ruta);
     if (!r.ok) return [];
     const doc = new DOMParser().parseFromString(await r.text(), 'text/html');
-    return [...doc.querySelectorAll('a[href]')].map(a => a.getAttribute('href'))
-      .filter(h => !/^(\.\.|\?|\/|#)|:\/\//.test(h));
+    return [...doc.querySelectorAll('a[href]')]
+      .filter(a => !/^(\.\.|\?|\/|#)|:\/\//.test(a.getAttribute('href')))
+      .map(a => ({ href: a.getAttribute('href'), bytes: +((a.nextSibling?.textContent || '').trim().split(/\s+/).pop()) || 0 }));
   };
-  const agregar = (cat, url) => {
+  const agregar = (cat, url, bytes) => {
     const sec = document.querySelector(`section.cat[data-cat="${cat}"]`);
     const archivo = decodeURIComponent(url.split('/').pop());
     const punto = archivo.lastIndexOf('.');
-    const nombre = (punto > 0 ? archivo.slice(0, punto) : archivo).replace(/[-_]+/g, ' ');
+    let base = punto > 0 ? archivo.slice(0, punto) : archivo;
+    const deWiki = /[-_ ]wikipedia$/i.test(base);
+    if (deWiki) base = base.replace(/[-_ ]wikipedia$/i, '');
     const li = document.createElement('li');
     li.dataset.item = '';
-    li.innerHTML = '<a><svg><use href="#i-doc"/></svg><span></span><span class="ext"></span></a>';
+    li.dataset.k = 'documento pdf ' + (deWiki ? 'wikipedia' : '');
+    li.innerHTML = '<a><svg aria-hidden="true"><use href="#i-doc"/></svg><span class="nombre"></span>' +
+      '<span class="meta"><span class="fuente" hidden>Wikipedia</span><span class="ext"></span></span></a>';
     li.querySelector('a').href = url;
-    li.querySelector('span').textContent = nombre.charAt(0).toUpperCase() + nombre.slice(1);
-    li.querySelector('.ext').textContent = punto > 0 ? archivo.slice(punto + 1) : '';
+    li.querySelector('.nombre').textContent = bonito(base);
+    li.querySelector('.fuente').hidden = !deWiki;
+    const ext = punto > 0 ? archivo.slice(punto + 1).toUpperCase() : '';
+    li.querySelector('.ext').textContent = [ext, tamano(bytes)].filter(Boolean).join(', ');
     sec.querySelector('.docs').append(li);
   };
+
+  // Mientras cargan, una fila de espera en cada categoría
+  document.querySelectorAll('section.cat .docs').forEach(ul => {
+    ul.innerHTML = '<li class="cargando" aria-hidden="true"><span></span></li>';
+    ul.hidden = false;
+  });
+
   (async () => {
     try {
-      for (const h of await enlaces('/pdf/')) {
-        if (!h.endsWith('/')) { agregar('educacion', '/pdf/' + h); continue; }
+      for (const { href: h, bytes } of await enlaces('/pdf/')) {
+        if (!h.endsWith('/')) { agregar('educacion', '/pdf/' + h, bytes); continue; }
         const cat = norm(decodeURIComponent(h.slice(0, -1)));
-        if (!['educacion', 'salud', 'ocio'].includes(cat)) continue;
-        for (const f of await enlaces('/pdf/' + h)) if (!f.endsWith('/')) agregar(cat, '/pdf/' + h + f);
+        if (!CATS.includes(cat)) continue;
+        for (const f of await enlaces('/pdf/' + h)) if (!f.href.endsWith('/')) agregar(cat, '/pdf/' + h + f.href, f.bytes);
       }
     } catch (e) { /* abierto como archivo local o sin /pdf/: quedan las tarjetas */ }
+    document.querySelectorAll('.docs li.cargando').forEach(li => li.remove());
+    document.querySelectorAll('section.cat .docs').forEach(ul =>       // propios primero, luego Wikipedia; alfabético
+      [...ul.children].sort((a, b) => (a.dataset.k > b.dataset.k) - (a.dataset.k < b.dataset.k)
+        || a.textContent.localeCompare(b.textContent, 'es')).forEach(li => ul.append(li)));
+    listos = true;
+
+    let docs = 0;
+    CATS.forEach(c => {
+      const sec = document.querySelector(`section.cat[data-cat="${c}"]`);
+      docs += sec.querySelectorAll('.docs li').length;
+      document.querySelector(`.filtros [data-f="${c}"] .n`).textContent = sec.querySelectorAll('[data-item]').length;
+    });
+    $('resumen').innerHTML = docs
+      ? `Hay <b>${docs} documentos</b>, la Wikipedia y un curso de programación, listos sin Internet.`
+      : 'Hay Wikipedia y un curso de programación, listos sin Internet.';
     aplicar();
+
+    // portal.hub.lan/?q=palabra abre el portal con esa búsqueda
+    const inicial = new URLSearchParams(location.search).get('q');
+    if (inicial) { $q.value = inicial; aplicar(); buscarWiki(inicial); }
   })();
 })();
 </script>
