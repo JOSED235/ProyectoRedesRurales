@@ -14,7 +14,7 @@
 | Entregable | Dónde |
 |---|---|
 | **Informe final IEEE (Fases 1 a 2.4 y evaluación frente a la rúbrica)** | [`docs/InformeFinal.pdf`](docs/InformeFinal.pdf) · fuente [`docs/InformeFinal.tex`](docs/InformeFinal.tex) |
-| Video de sustentación (13:21) | Se entrega por enlace (pesa 120 MB); estructura, guion y montaje en [`videopresentacion/`](videopresentacion/README.md) |
+| **Video de sustentación (13:21)** | [Ver en Google Drive](https://drive.google.com/file/d/1J6_ganKjTGxB2m3KPEWVqq3gwkQ7xW5S/view?usp=sharing) · estructura, guion y montaje en [`videopresentacion/`](videopresentacion/README.md) |
 | Configuraciones reales de los equipos | [`configs/`](configs/README.md) |
 | Evidencias (capturas y fotos) | [`docs/img/`](docs/img/) |
 | Registro de decisiones | [`docs/DECISIONES.md`](docs/DECISIONES.md) |
@@ -122,7 +122,7 @@ Plan de la Fase 1 (versión de José, [`InformePFinal.tex`](fase1-plan/version-j
 - **Caché Squid jerárquica:** RAM (`cache_mem`), `rock` en NVMe para objetos pequeños y `aufs` en el disco de 2–4 TB para objetos grandes. Reemplazo `heap LFUDA`.
 - **HTTPS:** *peek and splice* por SNI, sin instalar una CA en los teléfonos. El contenido masivo se sirve desde espejos locales en Nginx.
 - **Refresco:** `refresh_pattern` agresivo para estáticos (`pdf`, `epub`, `zim`, `mp4`, `jpg`, `css`, `js`): mínimo 7 días, máximo 30.
-- **Contenido offline:** Kiwix (Wikipedia ZIM), Kolibri y videos pre-transcodificados para Jellyfin.
+- **Contenido offline:** Kiwix (Wikipedia ZIM), Kolibri y videos pre-transcodificados para Jellyfin (en el prototipo, Jellyfin se reemplazó por Nginx; ver Fase 2.4).
 - **Conmutación online/offline:** *heartbeat* con histéresis que activa `offline_mode` en Squid.
 - **Energía:** batería con medidor y apagado ordenado al 15 %. Además: `ext4` con `noatime` y particiones por servicio para evitar corrupción.
 
@@ -157,7 +157,7 @@ ProyectoRedesRurales/
 │   ├── Fase2.1_Implementacion_Fisica_RPi5.pdf
 │   ├── Fase2.2_MikroTik_CCR2004_Respaldo_Hub_Restauracion.pdf
 │   └── Fase2.3_Servicios_AP_Portal_Cautivo.pdf
-├── videopresentacion/                     # Guion, narración y montaje del video (el .mp4 va por enlace)
+├── videopresentacion/                     # Guion, narración y montaje del video (el .mp4 está en Drive)
 ├── fase3-operacion/README.md              # Fase 3 — Hecho (video, portal) y pendiente
 ├── configs/                               # Configuraciones de equipos (ver configs/README.md)
 │   ├── mikrotik/                          # hub-base (GNS3), exports del CCR2004, páginas del Hotspot

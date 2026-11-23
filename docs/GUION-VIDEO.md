@@ -1,5 +1,7 @@
 # Guion del video — Hub rural sin Internet (versión para editar)
 
+> **Nota:** este fue el guion inicial. El video entregado usa la grabación de Carol más la narración de [`videopresentacion/GUION-AUDIO-JOSE.md`](../videopresentacion/GUION-AUDIO-JOSE.md); su estructura está en [`videopresentacion/README.md`](../videopresentacion/README.md).
+
 **Duración final:** 10 a 12 min. **JD** = José David, **CA** = Carol.
 
 El video se arma en dos partes:

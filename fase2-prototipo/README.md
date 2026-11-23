@@ -85,7 +85,7 @@ Respaldo del 17/11/2026: [`configs/mikrotik/hub-ccr2004-2026-11-17.rsc`](../conf
 Estado del 18/11/2026 (pasos 7 y 8 aplicados): [`configs/mikrotik/hub-ccr2004-2026-11-18.rsc`](../configs/mikrotik/hub-ccr2004-2026-11-18.rsc) y [`configs/mikrotik/hotspot/login.html`](../configs/mikrotik/hotspot/login.html). Bridge, VLAN 10/20/30, puertos, IPs, relay, NAT y PBR quedaron iguales al 17/11; solo se agregó lo de los pasos 7 y 8.
 Rediseño del 19/11 (sin laboratorio): portal [`configs/servidor/www/index.html`](../configs/servidor/www/index.html) con categorías Educación/Salud/Ocio y búsqueda local, guía [`certificado.html`](../configs/servidor/www/certificado.html) y todas las páginas del Hotspot en español en [`configs/mikrotik/hotspot/`](../configs/mikrotik/hotspot/). Se suben con [`ARRANQUE-LAB.md`](ARRANQUE-LAB.md) C.3.
 
-**Decisión:** en el prototipo los servicios del hub se instalan con `apt` y corren con systemd, sin Docker. Así gastan menos RAM, arrancan sin depender de otro servicio y `RequiresMountsFor=/srv/cdn` los protege si falta el disco. Docker queda para la Fase 3 (Jellyfin y Mosquitto), si hace falta.
+**Decisión:** en el prototipo los servicios del hub se instalan con `apt` y corren con systemd, sin Docker. Así gastan menos RAM, arrancan sin depender de otro servicio y `RequiresMountsFor=/srv/cdn` los protege si falta el disco. Docker queda para la Fase 3 (Mosquitto u otros servicios nuevos), si hace falta; Jellyfin se descartó en la Fase 2.4.
 
 | Paso | Qué | Dónde | Estado |
 |---|---|---|---|

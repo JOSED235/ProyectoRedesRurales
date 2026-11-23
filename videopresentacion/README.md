@@ -2,7 +2,7 @@
 
 | Archivo | Qué es |
 |---|---|
-| `VideoSustentacion_Final.mp4` | Video entregado (13:21, vertical 720×1280). **No está en el repositorio** porque pesa 120 MB (GitHub admite hasta 100 MB); se entrega por enlace. |
+| `VideoSustentacion_Final.mp4` | Video entregado (13:21, vertical 720×1280): **[ver en Google Drive](https://drive.google.com/file/d/1J6_ganKjTGxB2m3KPEWVqq3gwkQ7xW5S/view?usp=sharing)**. No está en el repositorio porque pesa 120 MB (GitHub admite hasta 100 MB). |
 | `VideoSustentacion.mp4` | Grabación original de Carol en el laboratorio con la Starlink Mini conectada (9:43). Tampoco se versiona. |
 | [`GUION-AUDIO-JOSE.md`](GUION-AUDIO-JOSE.md) | Guion de la narración complementaria de José (presentación, diseño, direccionamiento, pruebas y cierre). |
 | [`audios/`](audios/) | Narración de José, un archivo por bloque. |

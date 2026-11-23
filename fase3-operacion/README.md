@@ -29,4 +29,4 @@ Parte del prototipo de la Fase 2 ([`fase2-prototipo/README.md`](../fase2-prototi
 - Telemetría con Datadog.
 - Certificado real con certbot (DNS-01) cuando el profesor confirme el dominio.
 - CA de pruebas con `nameConstraints` limitada a `hub.lan` (ver Fase 2, Siguiente).
-- Docker solo para los servicios nuevos que lo justifiquen (Jellyfin, Mosquitto), con imágenes `linux/arm64`.
+- Docker solo para los servicios nuevos que lo justifiquen (Mosquitto; Jellyfin se descartó en la Fase 2.4), con imágenes `linux/arm64`.
