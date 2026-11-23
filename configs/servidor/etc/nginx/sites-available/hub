@@ -1,4 +1,5 @@
 # /etc/nginx/sites-available/hub — copia real del hub (respaldo 2026-11-17, Fase 2.3)
+# + bloque /video/ de la CDN de video (Fase 2.4, 2026-11-20)
 # HTTP: solo entrega el certificado de la CA y redirige lo demás a HTTPS
 server {
     listen 80 default_server;
@@ -22,6 +23,14 @@ server {
     charset utf-8;
     location /sitios/ { autoindex on; }
     location /pdf/    { autoindex on; }
+    # CDN de video (Fase 2.4): MP4 720p con faststart en el disco USB.
+    # ^~ gana sobre la regex de estáticos de abajo (si no, las miniaturas .jpg daban 404).
+    # Nginx responde 206 Partial Content a las peticiones Range: se puede adelantar el video.
+    location ^~ /video/ {
+        alias /srv/cdn/video/;
+        autoindex on;
+        expires 7d;
+    }
     location ~* \.(css|js|png|jpe?g|gif|svg|webp|woff2?|pdf)$ { expires 30d; }
 }
 

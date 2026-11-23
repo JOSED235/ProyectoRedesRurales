@@ -9,6 +9,21 @@
 
 ---
 
+## Entregables finales
+
+| Entregable | Dónde |
+|---|---|
+| **Informe final IEEE (Fases 1 a 2.4 y evaluación frente a la rúbrica)** | [`docs/InformeFinal.pdf`](docs/InformeFinal.pdf) · fuente [`docs/InformeFinal.tex`](docs/InformeFinal.tex) |
+| Video de la demostración | Grabado por el equipo (guion en [`docs/GUION-VIDEO.md`](docs/GUION-VIDEO.md)) |
+| Configuraciones reales de los equipos | [`configs/`](configs/README.md) |
+| Evidencias (capturas y fotos) | [`docs/img/`](docs/img/) |
+| Registro de decisiones | [`docs/DECISIONES.md`](docs/DECISIONES.md) |
+| Informe de avance (19/11, histórico) | [`docs/InformeAvance.pdf`](docs/InformeAvance.pdf) |
+
+**Resultado:** las 15 pruebas de red y servicios (P1–P15) y las 4 de video (V1–V4) se cumplieron en hardware físico (MikroTik CCR2004, Raspberry Pi 5, TP-Link y Starlink Mini). Con la Starlink conectada pero sin señal, el portal, los documentos, la Wikipedia y los videos siguieron funcionando.
+
+---
+
 ## 1. Contexto
 
 El proyecto despliega la infraestructura para una **unidad de atención comunitaria** que opera en zonas rurales. Allí la conexión a Internet es escasa o costosa y la energía es inestable. El enunciado ([`docs/Enunciado.txt`](docs/Enunciado.txt)) pide:
@@ -32,7 +47,7 @@ Al cerrar la Fase 1 cada integrante tenía su propia versión del plan. Las dos 
 | Carol (`10.20.0.0/22`, Mini PC, 4G, WireGuard) | `fase1-plan/version-carol/` | Histórico (se reutilizan VLSM, sumarización y matriz de tráfico) |
 | **Consolidado** (`10.20.0.0/24`, MikroTik + RPi5 + Starlink + UniFi) | `fase1-plan/laboratorio-gns3/`, `fase2-prototipo/` | **Vigente** |
 
-Paso de virtual a físico, un equipo a la vez: **2.1** RPi5 física (vía nodo Cloud de GNS3) → **2.2** MikroTik físico (CCR2004 prestado, puertos `ether9`–`ether12`) → **2.3** servicios del hub, AP (TP-Link de laboratorio), Hotspot, firewall y colas → AP UniFi → Starlink → energía. Detalle en [`fase2-prototipo/README.md`](fase2-prototipo/README.md).
+Paso de virtual a físico, un equipo a la vez: **2.1** RPi5 física (vía nodo Cloud de GNS3) → **2.2** MikroTik físico (CCR2004 prestado, puertos `ether9`–`ether12`) → **2.3** servicios del hub, AP (TP-Link de laboratorio), Hotspot, firewall, colas y Starlink Mini → **2.4** CDN local de video. Queda para la operación en campo (Fase 3): AP UniFi, SSD de 2 TB, purga automática y energía. Detalle en [`fase2-prototipo/README.md`](fase2-prototipo/README.md).
 
 ---
 
@@ -42,11 +57,11 @@ Paso de virtual a físico, un equipo a la vez: **2.1** RPi5 física (vía nodo C
 
 | Equipo | Rol |
 |---|---|
-| **Starlink Mini** (modo bypass) | Salida a Internet. Entrega la IP de `ether1` por DHCP y aplica CGNAT. |
+| **Starlink Mini** (modo bypass en campo; modo normal en el laboratorio) | Salida a Internet. Entrega la IP de `ether1` por DHCP y aplica CGNAT. En el laboratorio se conectó a `ether9` y recibió `192.168.1.159/24`. |
 | **MikroTik** (RouterOS 7) | Router L3 de todas las VLAN (router-on-a-stick, bridge con `vlan-filtering`), NAT, relay DHCP, desvío de HTTP a Squid, Hotspot (portal cautivo) con HTTPS, firewall entre VLAN y colas. En el laboratorio es un CCR2004-16G-2S+ compartido (puertos en [`fase2-prototipo/README.md`](fase2-prototipo/README.md#22--mikrotik-físico-ccr2004-prestado)). |
 | **UniFi UAP-AC-M** (PoE) | Access point L2. Asocia cada SSID a una VLAN. Su gestión va sin etiqueta en la VLAN 10. En el laboratorio se usa un TP-Link TL-WA801ND (`10.20.0.163`) con la misma configuración. |
-| **Raspberry Pi 5** — servidor `hub` | Ubuntu Server 24.04 ARM64 con IP fija en la VLAN 10. Servicios con `apt` + systemd (sin Docker en la Fase 2): DNS/DHCP (`dnsmasq`), NTP (`chrony`), Nginx (HTTPS), Kiwix, Squid y ufw. Fase 3: Jellyfin y Mosquitto (Docker si hace falta). Disco NVMe + 2–4 TB por USB 3. |
-| Portátil de administración | Conectado por cable a `ether4` (VLAN 10). |
+| **Raspberry Pi 5** — servidor `hub` | Ubuntu Server 24.04 ARM64 con IP fija en la VLAN 10. Servicios con `apt` + systemd (sin Docker): DNS/DHCP (`dnsmasq`), NTP (`chrony`), Nginx (HTTPS, portal y CDN de video con peticiones de rango), Kiwix, Squid y ufw. Disco USB de 465 GB en `/srv/cdn` en el prototipo; SSD de 2–4 TB en la operación en campo. Jellyfin se descartó: la RPi5 no tiene codificador H.264 por hardware, así que el video se codifica una vez fuera del hub y se sirve como archivo. |
+| Portátil de administración | Conectado por cable a `ether4` (VLAN 10); en el CCR2004 del laboratorio, `ether12`. |
 | Batería + medidor + convertidores DC | Alimentación autónoma con apagado ordenado al 15 %. |
 
 ### 3.2 Topología
@@ -74,7 +89,7 @@ Paso de virtual a físico, un equipo a la vez: **2.1** RPi5 física (vía nodo C
 
 | VLAN | Nombre | Subred | Gateway | Hosts útiles | Equipos con IP fija |
 |---|---|---|---|---|---|
-| 10 | Administración | `10.20.0.160/28` | `10.20.0.161` | 14 | hub `.162`, cliente-admin `.164` |
+| 10 | Administración | `10.20.0.160/28` | `10.20.0.161` | 14 | hub `.162`, AP `.163`, cliente-admin `.164` |
 | 20 | Salud | `10.20.0.128/27` | `10.20.0.129` | 30 | (lab) cliente-salud `.130` |
 | 30 | Pública / Comunidad | `10.20.0.0/25` | `10.20.0.1` | 126 | (lab) cliente-publica `.5` |
 | — | Libre para crecer | `10.20.0.176/28`, `10.20.0.192/26` | — | 14 + 62 | — |
@@ -88,11 +103,13 @@ NAT: `srcnat 10.20.0.0/24 → ether1 masquerade`. Hay doble traducción (MikroTi
 - [`configs/mikrotik/hub-ccr2004.rsc`](configs/mikrotik/hub-ccr2004.rsc): configuración inicial de la Fase 2.2 en el CCR2004 prestado (`ether9`–`ether12`), más NTP y servicios de gestión.
 - [`configs/mikrotik/hub-ccr2004-2026-11-17.rsc`](configs/mikrotik/hub-ccr2004-2026-11-17.rsc): `/export` real del MikroTik físico (17/11/2026).
 - [`configs/mikrotik/hub-ccr2004-2026-11-18.rsc`](configs/mikrotik/hub-ccr2004-2026-11-18.rsc): `/export` con Hotspot, firewall y colas (18/11/2026).
+- [`configs/mikrotik/hub-ccr2004-2026-11-19.rsc`](configs/mikrotik/hub-ccr2004-2026-11-19.rsc): `/export` final (19/11/2026) con la Starlink Mini en `ether9`.
 - [`configs/mikrotik/fase23-pendiente.rsc`](configs/mikrotik/fase23-pendiente.rsc): script con el que se aplicaron el Hotspot, el firewall y las colas.
 - [`configs/mikrotik/hotspot/`](configs/mikrotik/hotspot/): páginas del Hotspot en español (acceso, estado, cierre de sesión, errores).
 - [`configs/servidor/01-hub.yaml`](configs/servidor/01-hub.yaml): netplan del hub (RPi5).
 - [`configs/servidor/etc/`](configs/servidor/etc/): dnsmasq, chrony, SSH, Nginx, Squid y Kiwix del hub.
 - [`configs/servidor/www/`](configs/servidor/www/): portal `portal.hub.lan` (categorías y búsqueda local), guía del certificado y CA de pruebas.
+- [`configs/servidor/contenido/`](configs/servidor/contenido/): scripts que generan las guías PDF propias (`guias.py`) y las fábulas de Samaniego (`fab.py`).
 
 Para retomar en el laboratorio: [`fase2-prototipo/ARRANQUE-LAB.md`](fase2-prototipo/ARRANQUE-LAB.md).
 
@@ -100,7 +117,7 @@ Para retomar en el laboratorio: [`fase2-prototipo/ARRANQUE-LAB.md`](fase2-protot
 
 ## 4. Estrategia de caché, almacenamiento y energía
 
-Estas ideas vienen de la versión de José ([`InformePFinal.tex`](fase1-plan/version-jose/InformePFinal.tex)). Hay que ajustarlas al direccionamiento vigente en la Fase 2.
+Plan de la Fase 1 (versión de José, [`InformePFinal.tex`](fase1-plan/version-jose/InformePFinal.tex)). Lo que ya está implementado en el prototipo se resume al final de la sección.
 
 - **Caché Squid jerárquica:** RAM (`cache_mem`), `rock` en NVMe para objetos pequeños y `aufs` en el disco de 2–4 TB para objetos grandes. Reemplazo `heap LFUDA`.
 - **HTTPS:** *peek and splice* por SNI, sin instalar una CA en los teléfonos. El contenido masivo se sirve desde espejos locales en Nginx.
@@ -109,19 +126,23 @@ Estas ideas vienen de la versión de José ([`InformePFinal.tex`](fase1-plan/ver
 - **Conmutación online/offline:** *heartbeat* con histéresis que activa `offline_mode` en Squid.
 - **Energía:** batería con medidor y apagado ordenado al 15 %. Además: `ext4` con `noatime` y particiones por servicio para evitar corrupción.
 
+**Implementado en el prototipo:** Squid transparente (`3129 intercept`) con 256 MB de RAM, 4 GB en disco, `heap LFUDA` y `refresh_pattern` por tipo; HTTPS sin descifrar (sale directo); desvío por PBR en el MikroTik con *netwatch* que lo apaga si Squid cae; Kiwix, PDF y video servidos por Nginx desde `/srv/cdn` (ext4, `noatime,nofail`). **Pendiente (Fase 3):** SSD de 2 TB, caché de 50–100 GB, purga automática, `offline_mode` con *heartbeat* y batería.
+
 ---
 
 ## 5. Estructura del repositorio
 
 ```
 ProyectoRedesRurales/
-├── docs/                                  # Material oficial del curso e informe de avance
+├── docs/                                  # Material del curso, informes y evidencias
 │   ├── Enunciado.txt
 │   ├── Rúbrica Proyecto Redes Rurales.xlsx
+│   ├── InformeFinal.tex / .pdf            # ► Informe final IEEE (entrega)
+│   ├── InformeAvance.tex / .pdf           # Informe de avance (Fases 1 a 2.3, 19/11/2026)
 │   ├── DECISIONES.md                      # Registro de decisiones y datos importantes (con fecha)
-│   ├── InformeAvance.tex                  # Informe de avance IEEE (Fases 1 a 2.3, 19/11/2026)
-│   ├── InformeAvance.pdf                  # PDF compilado para la entrega
-│   └── img/                               # Capturas y fotos de evidencia usadas en el informe
+│   ├── GUION-VIDEO.md                     # Guion del video de la demostración
+│   ├── captura.py                         # Convierte salida de terminal en PNG para las evidencias
+│   └── img/                               # Capturas y fotos de evidencia usadas en los informes
 ├── fase1-plan/                            # Fase 1 — Plan de proyecto
 │   ├── README.md                          # Comparación de versiones y diseño consolidado
 │   ├── version-jose/InformePFinal.tex     # Informe IEEE (versión José)
@@ -131,13 +152,15 @@ ProyectoRedesRurales/
 │   ├── README.md                          # 2.1, 2.2, 2.3, pruebas y bitácora
 │   ├── ARRANQUE-LAB.md                    # Lista para retomar en el laboratorio
 │   ├── SESION-2026-11-18.md               # Bitácora de la sesión del 18/11
+│   ├── SESION-2026-11-19.md               # Bitácora del 19/11 (Starlink, P12/P13, contenido)
+│   ├── GUIA-GRABACION-VIDEO.md            # Clips del laboratorio para el video
 │   ├── Fase2.1_Implementacion_Fisica_RPi5.pdf
 │   ├── Fase2.2_MikroTik_CCR2004_Respaldo_Hub_Restauracion.pdf
 │   └── Fase2.3_Servicios_AP_Portal_Cautivo.pdf
-├── fase3-operacion/README.md              # Fase 3 — Alcance pendiente
+├── fase3-operacion/README.md              # Fase 3 — Hecho (video, portal) y pendiente
 ├── configs/                               # Configuraciones de equipos (ver configs/README.md)
 │   ├── mikrotik/                          # hub-base (GNS3), exports del CCR2004, páginas del Hotspot
-│   └── servidor/                          # Netplan, /etc y portal web del hub RPi5
+│   └── servidor/                          # Netplan, /etc, portal web y scripts de contenido del hub
 ├── skills/skills.md                       # Catálogo de competencias del proyecto
 ├── .claude/skills/ingeniero-redes-rurales/SKILL.md   # Skill de Claude Code (ingeniero de redes)
 ├── GEMINI.md                              # Reglas del asistente (siempre en español)
@@ -152,21 +175,26 @@ ProyectoRedesRurales/
   - [x] Versión José: informe IEEE con caché, almacenamiento, cronograma, BOM y riesgos.
   - [x] Versión Carol: topología, VLSM, supernetting, tablas de rutas y matriz de tráfico.
   - [x] Diseño consolidado (MikroTik + RPi5 + Starlink + UniFi, `10.20.0.0/24`).
-- [x] **Fase 1.2 — Laboratorio virtual GNS3** (27/10/2026)
-  - [x] MikroTik CHR 7.25 con VLAN 10/20/30, NAT y salida a Internet.
-  - [x] Servidor Ubuntu 24.04.5 en `10.20.0.162/28`, clientes por VLAN y tráfico 802.1Q verificado.
-  - [x] Aislamiento entre VLAN: se hizo en la Fase 2.3 con el firewall (prueba P14, 18/11/2026).
-- [ ] **Fase 2 — Prototipo funcional**
-  - [x] 2.1 Raspberry Pi 5 física (Ubuntu Server 24.04) integrada al laboratorio mediante un nodo Cloud.
-  - [x] 2.2 MikroTik físico: CCR2004 prestado con la configuración del hub (`ether9`–`ether12`), portátil como WAN, respaldo y restauración del otro grupo (05/11/2026, pruebas 1–10 Cumple).
-  - [x] 2.3 Hub: ufw, SSH con llave, `/srv/cdn` (ext4 `noatime`), dnsmasq + relay, chrony, Nginx HTTPS, Kiwix, Squid transparente (respaldo 17/11/2026).
-  - [x] 2.3 Access point TP-Link con Hub-Salud (V20) y Hub-Publica (V30).
-  - [x] 2.3 Certificado en el MikroTik, Hotspot (portal cautivo), firewall entre VLAN y colas (18/11/2026).
-  - [ ] 2.3 Pruebas P1–P15 con capturas (13 de 15 OK el 19/11; faltan P1 y cerrar P10). Ver [`fase2-prototipo/SESION-2026-11-19.md`](fase2-prototipo/SESION-2026-11-19.md).
-  - [ ] 2.3 Portal y páginas del Hotspot rediseñados (en el repo el 19/11; falta subirlos y probarlos en el lab).
-  - [ ] Disco de 2–4 TB definitivo (hoy: disco USB prestado o archivo de 10 GB).
-- [x] Informe de avance IEEE (Fases 1 a 2.3): [`docs/InformeAvance.tex`](docs/InformeAvance.tex) y [PDF](docs/InformeAvance.pdf) (compilado con `texlive/texlive:latest-full`).
-- [ ] **Fase 3 — Sistema plenamente operacional** (Jellyfin, purga automática, dashboard con búsqueda, conmutación online/offline, energía).
+- [x] **Fase 1.2 — Laboratorio virtual GNS3** (27/10/2026): VLAN 10/20/30, NAT, clientes por VLAN y 802.1Q verificado en Wireshark.
+- [x] **Fase 2 — Prototipo funcional**
+  - [x] 2.1 Raspberry Pi 5 física integrada al laboratorio mediante un nodo Cloud (30/10/2026).
+  - [x] 2.2 MikroTik físico CCR2004 prestado (`ether9`–`ether12`), respaldo y restauración del otro grupo (05/11/2026, pruebas 1–10).
+  - [x] 2.3 Hub: ufw, SSH con llave, `/srv/cdn`, dnsmasq + relay, chrony, Nginx HTTPS, Kiwix, Squid transparente (13–17/11).
+  - [x] 2.3 AP TP-Link (Hub-Salud V20, Hub-Publica V30), Hotspot por VLAN, firewall de 18 reglas y colas (18/11).
+  - [x] 2.3 Portal rediseñado, guías PDF, páginas del Hotspot en español y Starlink Mini en `ether9` (19/11).
+  - [x] 2.4 CDN local de video: MP4 720p ≤ 1,2 Mbps con *faststart*, Nginx con peticiones de rango (206) y catálogo `videos.html` (20/11).
+  - [x] Pruebas P1–P15 y V1–V4: todas Cumple (detalle en la Tabla VII del informe final).
+- [x] Informe final IEEE: [`docs/InformeFinal.pdf`](docs/InformeFinal.pdf) (compilado con `texlive/texlive:latest-full`).
+- [ ] **Fase 3 — Operación en campo** (ver [`fase3-operacion/README.md`](fase3-operacion/README.md)): hecho el streaming local y el portal con búsqueda; falta SSD de 2–4 TB, purga automática y cuotas, conmutación online/offline, batería y AP UniFi.
+
+### Compilar el informe
+
+```bash
+cd docs
+docker run --rm -u $(id -u):$(id -g) -v "$PWD":/w -w /w texlive/texlive:latest-full \
+  latexmk -pdf -interaction=nonstopmode InformeFinal.tex
+latexmk -c InformeFinal.tex   # borra los auxiliares
+```
 
 ---
 

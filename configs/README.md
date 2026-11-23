@@ -10,6 +10,7 @@ Archivos que se copian tal cual a los equipos. Se probaron primero en el laborat
 | [`mikrotik/hub-ccr2004.rsc`](mikrotik/hub-ccr2004.rsc) | Configuración inicial en el CCR2004 prestado (Fase 2.2, puertos `ether9`–`ether12`) | Resetear sin defaults y pegar por consola serial, bloque por bloque |
 | [`mikrotik/hub-ccr2004-2026-11-17.rsc`](mikrotik/hub-ccr2004-2026-11-17.rsc) | `/export` real del CCR2004 del laboratorio (Fase 2.3 hasta el paso 6) | Referencia. En el lab se restaura con el `.backup`, que no se versiona |
 | [`mikrotik/hub-ccr2004-2026-11-18.rsc`](mikrotik/hub-ccr2004-2026-11-18.rsc) | `/export` real del CCR2004 con los pasos 7 y 8 (Hotspot, firewall, colas) | Referencia. Sin contraseñas (RouterOS 7 las oculta) |
+| [`mikrotik/hub-ccr2004-2026-11-19.rsc`](mikrotik/hub-ccr2004-2026-11-19.rsc) | `/export` final del 19/11 con la Starlink Mini en `ether9` y las páginas nuevas del Hotspot | Referencia del estado entregado |
 | [`mikrotik/hotspot/`](mikrotik/hotspot/) | Páginas del Hotspot en español con el estilo del portal: `login.html` (Hub-Publica con prueba gratis, Hub-Salud con usuario y clave), `alogin.html`, `status.html`, `logout.html`, `error.html`, `errors.txt` y `hub.css` | `scp -O hub.css login.html alogin.html status.html logout.html error.html errors.txt admin@10.20.0.161:hotspot/` |
 | [`mikrotik/fase23-pendiente.rsc`](mikrotik/fase23-pendiente.rsc) | Certificado, Hotspot, firewall y colas (pasos 7 y 8) | Pegar por bloques sobre el respaldo del 17/11 |
 
@@ -23,7 +24,7 @@ Las rutas dentro de `servidor/etc/` son las mismas de `/etc` en la Raspberry. Co
 | [`servidor/etc/dnsmasq.d/hub.conf`](servidor/etc/dnsmasq.d/hub.conf) | `/etc/dnsmasq.d/hub.conf` | DNS `hub.lan` y DHCP de las VLAN 10/20/30 |
 | [`servidor/etc/chrony/conf.d/hub.conf`](servidor/etc/chrony/conf.d/hub.conf) | `/etc/chrony/conf.d/hub.conf` | NTP para la red, también sin Internet |
 | [`servidor/etc/ssh/sshd_config.d/10-hub.conf`](servidor/etc/ssh/sshd_config.d/10-hub.conf) | `/etc/ssh/sshd_config.d/10-hub.conf` | SSH solo con llave, solo `carol` |
-| [`servidor/etc/nginx/sites-available/hub`](servidor/etc/nginx/sites-available/hub) | `/etc/nginx/sites-available/hub` | Portal, CDN y Kiwix por HTTPS |
+| [`servidor/etc/nginx/sites-available/hub`](servidor/etc/nginx/sites-available/hub) | `/etc/nginx/sites-available/hub` | Portal, CDN (PDF y `/video/` con peticiones de rango) y Kiwix por HTTPS |
 | [`servidor/etc/squid/squid.conf`](servidor/etc/squid/squid.conf) | `/etc/squid/squid.conf` | Caché HTTP transparente (`3129 intercept`) |
 | [`servidor/etc/systemd/system/kiwix.service`](servidor/etc/systemd/system/kiwix.service) | `/etc/systemd/system/kiwix.service` | Wikipedia sin conexión en `127.0.0.1:8080` |
 | [`servidor/etc/systemd/system/squid.service.d/10-disco.conf`](servidor/etc/systemd/system/squid.service.d/10-disco.conf) | `/etc/systemd/system/{nginx,squid,kiwix}.service.d/10-disco.conf` | No arrancar sin `/srv/cdn` montado |
@@ -31,13 +32,18 @@ Las rutas dentro de `servidor/etc/` son las mismas de `/etc` en la Raspberry. Co
 | [`servidor/www/index.html`](servidor/www/index.html) | `/srv/cdn/www/index.html` | Portal: categorías Educación/Salud/Ocio y búsqueda local. Lista los documentos de `/srv/cdn/www/pdf/{educacion,salud,ocio}/`; los PDF sueltos en `pdf/` salen en Educación |
 | [`servidor/www/certificado.html`](servidor/www/certificado.html) | `/srv/cdn/www/certificado.html` | Guía para instalar la CA en Android, iPhone y PC. Nginx la sirve también por HTTP |
 
+| [`servidor/contenido/guias.py`](servidor/contenido/guias.py) | Se ejecuta en el portátil; el PDF va a `/srv/cdn/www/pdf/<categoría>/` | Genera las guías propias (lavado de manos, primeros auxilios, cartilla de matemáticas) |
+| [`servidor/contenido/fab.py`](servidor/contenido/fab.py) | Ídem | Descarga de Wikisource y arma el PDF de fábulas de Samaniego (con caché local) |
+
 Además, en la Raspberry (no versionado como archivo propio):
 
 - `/etc/fstab`: `LABEL=HUBDATA /srv/cdn ext4 noatime,nofail,x-systemd.device-timeout=10s 0 2` (una sola línea para `/srv/cdn`).
 - `/etc/ufw/before.rules`, al inicio: `*nat` con `-A PREROUTING -i eth0 -p tcp --dport 80 ! -d 10.20.0.162 -j REDIRECT --to-ports 3129`.
 - Reglas de ufw: paso 1.2 del PDF de la Fase 2.3.
 
-Los servicios se instalan con `apt` y corren con systemd. No se usa Docker en la Fase 2.
+- `/srv/cdn/video/{salud,educacion,ocio}/`: videos MP4 de la Fase 2.4 y `generar-videos.sh`, que crea `/srv/cdn/www/videos.html`.
+
+Los servicios se instalan con `apt` y corren con systemd. No se usa Docker.
 
 ## Reglas
 

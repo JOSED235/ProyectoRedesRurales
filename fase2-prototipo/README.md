@@ -97,8 +97,8 @@ Rediseño del 19/11 (sin laboratorio): portal [`configs/servidor/www/index.html`
 | 6 | TP-Link TL-WA801ND: Hub-Salud (V20, WPA2) y Hub-Publica (V30, abierta) | TP-Link | Hecho |
 | 7 | Certificado en el MikroTik, Hotspot y enlace en `login.html` | MikroTik | Hecho (18/11) |
 | 8 | Firewall entre VLAN y colas | MikroTik | Hecho y comprobado (18/11) |
-| 9 | Pruebas P1–P15 con capturas | Todos | En curso (11/15 el 18/11) |
-| 10 | Portal rediseñado, guía del certificado y páginas del Hotspot; `host-record` de `wifi-publica`/`wifi-salud`; `certificado.html` por HTTP en Nginx | Raspberry, MikroTik | En el repo (19/11); falta subir y probar |
+| 9 | Pruebas P1–P15 con capturas | Todos | Hecho: 15/15 (P1 y P10 cerradas el 20/11) |
+| 10 | Portal rediseñado, guía del certificado y páginas del Hotspot; `host-record` de `wifi-publica`/`wifi-salud`; `certificado.html` por HTTP en Nginx | Raspberry, MikroTik | Hecho (19/11) |
 
 El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El UniFi UAP-AC-M sigue siendo el del diseño final; la configuración SSID↔VLAN es la misma.
 
@@ -106,16 +106,16 @@ El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El Un
 
 | ID | Criterio | Qué se prueba | Resultado esperado | Estado |
 |---|---|---|---|---|
-| P1 | Instalación y SO | Todo vuelve tras `sudo reboot` | 5× `active` y `/srv/cdn` con `noatime` | Pendiente |
+| P1 | Instalación y SO | Todo vuelve tras `sudo reboot` | 5× `active` y `/srv/cdn` con `noatime` | OK 20/11 (servicios, disco y videos tras reiniciar) |
 | P2 | Instalación y SO | Seguridad básica | `Permission denied (publickey)`; ufw activo | OK 18/11 (se volvió a poner `PasswordAuthentication no`) |
 | P3 | Conectividad | DHCP por relay, pública | IP `.10–.126`, gw `10.20.0.1`, DNS `10.20.0.162` | OK 18/11 (`10.20.0.57`) |
 | P4 | Conectividad | DHCP por relay, salud | IP `.135–.158`, gw `10.20.0.129` | OK 18/11 (`10.20.0.157`) |
 | P5 | Conectividad | DNS local y caché | `portal.hub.lan` → `10.20.0.162`; 2.ª consulta ≈ 0 ms | OK 18/11 (12 ms → 0 ms) |
 | P6 | Conectividad | Hora común | MikroTik `synchronized` con `10.20.0.162` | OK 18/11 |
 | P7 | Conectividad | Portal cautivo pública | Abre solo; con la prueba se navega | OK 18/11 |
-| P8 | Conectividad | Portal con usuario, salud | Navega; `/ip hotspot active print` | OK 18/11 (falta captura de `active print`) |
+| P8 | Conectividad | Portal con usuario, salud | Navega; `/ip hotspot active print` | OK 18/11 |
 | P9 | Caché estática | HTTPS obligatorio | `http://portal.hub.lan` termina en HTTPS con candado | OK 18/11 (301 → HTTPS, verificado con la CA) |
-| P10 | Caché estática | Contenido sin iniciar sesión | Portal, PDF y Wikipedia abren | Parcial 19/11 (portal y Wikipedia en el celular; falta captura sin sesión del PDF) |
+| P10 | Caché estática | Contenido sin iniciar sesión | Portal, PDF y Wikipedia abren | OK 20/11 (portal, PDF, Wikipedia y videos en 200 sin sesión) |
 | P11 | Caché estática | Sin Internet | P5, P9 y P10 siguen funcionando | OK 18/11 (WiFi del portátil apagado) |
 | P12 | Caché estática | Caché de Squid | `TCP_MISS` y luego `TCP_HIT`/`TCP_MEM_HIT` | OK 19/11 (0,57 s → 0,002 s; celular `TCP_MEM_HIT`) |
 | P13 | Caché estática | Squid caído no corta | Sigue navegando; `pbr-squid` desactivada | OK 19/11 (se desactiva y se reactiva sola) |
@@ -136,6 +136,23 @@ El access point de la prueba es el **TP-Link TL-WA801ND** del laboratorio. El Un
 | 18/11: el portátil pierde enlace en `ether9` | Cable o conector flojo | Cambiar el cable; al volver, repetir `ip route replace` |
 | 18/11: la Pi aceptaba contraseña por SSH (P2 fallaba) | `10-hub.conf` quedó con `PasswordAuthentication yes` tras usar el plan B de A.1 | `sed` a `no`, `sshd -t` y `systemctl restart ssh`. Después del plan B, cerrar siempre |
 | 18/11: SSH a la Pi sin llave del portátil nuevo | `ssh-copy-id` | La Pi aceptó contraseña (`publickey,password`); llave agregada con `ssh-copy-id`. En el MikroTik: `/user ssh-keys import` |
+
+## 2.4 — CDN local de video (20/11/2026)
+
+Videos educativos servidos desde el disco del hub, sin Internet y sin cargar la CPU de la Raspberry.
+
+- **Ubicación:** `/srv/cdn/video/{salud,educacion,ocio}/` con una miniatura `.jpg` por video.
+- **Perfil de codificación** (se hace una vez, fuera del hub): `ffmpeg -i entrada -vf scale=-2:720 -c:v libx264 -crf 26 -maxrate 1200k -bufsize 2400k -c:a aac -b:a 96k -ac 2 -movflags +faststart salida.mp4`. ≈ 1,3 Mbps en total: cabe en la cola de 2 Mbps por usuario de Hub-Publica. `faststart` pone el índice al inicio y el video arranca de inmediato.
+- **Nginx:** bloque `location ^~ /video/` en [`configs/servidor/etc/nginx/sites-available/hub`](../configs/servidor/etc/nginx/sites-available/hub). El `^~` evita que la regex de estáticos capture las miniaturas (daban 404). Nginx responde `206 Partial Content` a las peticiones `Range`, así se puede adelantar.
+- **Catálogo:** `generar-videos.sh` genera `/srv/cdn/www/videos.html` con `<video controls preload="metadata">`, enlazado desde el portal.
+- **Decisión:** sin Jellyfin ni transcodificación en vivo: la RPi5 no tiene codificador H.264 por hardware.
+
+| ID | Qué se prueba | Resultado | Estado |
+|---|---|---|---|
+| V1 | `curl -I` a un MP4 | `200`, `video/mp4`, `Accept-Ranges: bytes` | OK |
+| V2 | `curl -r 0-99` | `206 Partial Content` | OK |
+| V3 | Celular en Hub-Publica sin Internet | Reproduce de inmediato y se puede adelantar | OK |
+| V4 | Tras `sudo reboot` | `videos.html` y `/srv/cdn/video/` disponibles | OK |
 
 ### Siguiente (Fase 3)
 

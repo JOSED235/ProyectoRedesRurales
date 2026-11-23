@@ -4,3 +4,14 @@ respaldo-*.zip
 *.bin
 *.tgz
 *.key
+# Archivos auxiliares de LaTeX
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+# Caché de descargas del script de fábulas
+configs/servidor/contenido/fabcache/
+# Video final (122 MB): supera el límite de 100 MB de GitHub; se entrega por enlace
+videopresentacion/
