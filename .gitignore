@@ -13,5 +13,6 @@ respaldo-*.zip
 *.synctex.gz
 # Caché de descargas del script de fábulas
 configs/servidor/contenido/fabcache/
-# Video final (122 MB): supera el límite de 100 MB de GitHub; se entrega por enlace
-videopresentacion/
+# Videos (más de 100 MB, límite de GitHub): se entregan por enlace
+videopresentacion/*.mp4
+videopresentacion/edicion/work/

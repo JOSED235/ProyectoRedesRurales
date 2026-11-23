@@ -14,7 +14,7 @@
 | Entregable | Dónde |
 |---|---|
 | **Informe final IEEE (Fases 1 a 2.4 y evaluación frente a la rúbrica)** | [`docs/InformeFinal.pdf`](docs/InformeFinal.pdf) · fuente [`docs/InformeFinal.tex`](docs/InformeFinal.tex) |
-| Video de la demostración | Grabado por el equipo (guion en [`docs/GUION-VIDEO.md`](docs/GUION-VIDEO.md)) |
+| Video de sustentación (13:21) | Se entrega por enlace (pesa 120 MB); estructura, guion y montaje en [`videopresentacion/`](videopresentacion/README.md) |
 | Configuraciones reales de los equipos | [`configs/`](configs/README.md) |
 | Evidencias (capturas y fotos) | [`docs/img/`](docs/img/) |
 | Registro de decisiones | [`docs/DECISIONES.md`](docs/DECISIONES.md) |
@@ -157,6 +157,7 @@ ProyectoRedesRurales/
 │   ├── Fase2.1_Implementacion_Fisica_RPi5.pdf
 │   ├── Fase2.2_MikroTik_CCR2004_Respaldo_Hub_Restauracion.pdf
 │   └── Fase2.3_Servicios_AP_Portal_Cautivo.pdf
+├── videopresentacion/                     # Guion, narración y montaje del video (el .mp4 va por enlace)
 ├── fase3-operacion/README.md              # Fase 3 — Hecho (video, portal) y pendiente
 ├── configs/                               # Configuraciones de equipos (ver configs/README.md)
 │   ├── mikrotik/                          # hub-base (GNS3), exports del CCR2004, páginas del Hotspot
