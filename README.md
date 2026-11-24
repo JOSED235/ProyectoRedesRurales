@@ -9,6 +9,16 @@
 
 ---
 
+## En 30 segundos
+
+<p><img src="docs/img/f23-portal-inicio.png" width="49%" alt="Portal del hub rural"> <img src="docs/img/f23-foto-montaje.png" width="49%" alt="MikroTik CCR2004 y Raspberry Pi 5 en el laboratorio"></p>
+
+- **Qué es:** la red local de un puesto de atención comunitaria rural. Portal cautivo por grupo (administración, salud y público), Wikipedia, guías de salud y videos guardados en una Raspberry Pi 5, y salida a Internet por Starlink cuando hay cielo.
+- **Resultado:** 15/15 pruebas de red y servicios y 4/4 de video en hardware real (MikroTik CCR2004, Raspberry Pi 5, TP-Link y Starlink Mini). Con la Starlink sin señal, todo lo local siguió funcionando.
+- **Video de sustentación (13:21):** [Google Drive](https://drive.google.com/file/d/1J6_ganKjTGxB2m3KPEWVqq3gwkQ7xW5S/view?usp=sharing).
+- **Decisiones clave:** router y servidor separados, para que una falla de la Raspberry Pi no tumbe la red ni el portal; y video codificado una vez fuera del hub (la RPi5 no tiene codificador H.264) y servido como archivo con Nginx.
+- **Dónde mirar:** [`configs/`](configs/README.md) (configuración real de los equipos) y [`docs/InformeFinal.pdf`](docs/InformeFinal.pdf).
+
 ## Entregables finales
 
 | Entregable | Dónde |
